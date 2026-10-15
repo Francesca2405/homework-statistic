@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homework 2 - Ethereum Wallet Pipeline</title>
+    <style>
+        body {
+            font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
+            line-height: 1.6;
+            color: #3d4a3e;
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 40px 30px;
+            background-color: #FAF6F0; /* Crema caldo */
+        }
+        .nav-bar { margin-bottom: 30px; }
+        .nav-btn {
+            text-decoration: none; color: #4a5c4d; font-weight: bold;
+            border: 2px solid #a3b899; padding: 8px 18px; border-radius: 12px; transition: 0.3s;
+            background: #FFFDF9;
+        }
+        .nav-btn:hover { background-color: #728c75; color: #FFFDF9; border-color: #728c75; }
+        
+        h1 { text-align: center; color: #4a5c4d; margin-bottom: 5px; font-weight: normal; }
+        .subtitle { text-align: center; color: #728c75; font-style: italic; margin-bottom: 40px; }
+        h2 { color: #4a5c4d; border-bottom: 2px solid #dcd4c4; padding-bottom: 5px; margin-top: 40px; font-weight: normal; }
+        h3 { color: #5c705e; margin-top: 25px; font-weight: normal; }
+        p, li { text-align: justify; }
+        
+        .pipeline-box {
+            background-color: #728c75; /* Salvia scuro */
+            color: #FFFDF9; 
+            padding: 24px; 
+            border-radius: 16px;
+            text-align: center; 
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.15em; 
+            margin: 30px 0; 
+            box-shadow: 0 8px 20px rgba(114, 140, 117, 0.1);
+        }
+        .pipeline-arrow { color: #f2c06b; font-weight: bold; } /* Caldo giallo-ocra */
+        
+        .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px; }
+        .concept-card {
+            background-color: #FFFDF9; 
+            padding: 20px; 
+            border-left: 4px solid #a3b899;
+            border-radius: 0 12px 12px 0; 
+            box-shadow: 0 4px 8px rgba(114, 140, 117, 0.03);
+        }
+        
+        .code-block {
+            background-color: #2b332b; /* Verde-nero scuro foresta */
+            color: #ebdcb9; 
+            padding: 18px;
+            border-radius: 12px; 
+            font-family: "Courier New", Courier, monospace;
+            overflow-x: auto; 
+            font-size: 0.9em; 
+            margin-top: 15px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
+        .code-output { color: #9bc59b; margin-top: 12px; border-top: 1px dashed #5c705e; padding-top: 12px; }
+        
+        .timeline { border-left: 3px solid #728c75; padding-left: 20px; margin-left: 10px; }
+        .timeline-item { margin-bottom: 18px; position: relative; }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -27.5px; top: 5px; width: 12px; height: 12px;
+            background-color: #e8b86b; border-radius: 50%;
+        }
+        
+        .discussion {
+            background-color: #EDF3EC; 
+            padding: 24px; 
+            border-radius: 16px; 
+            border: 1px solid #d2ded0; 
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <a href="index.html" class="nav-btn">← Back to Home</a>
+    </div>
+
+    <h1>Homework 2: From Wallet Seed to Ethereum Address</h1>
+    <div class="subtitle">Hashing, Key Derivation, and Cryptographic Primitives</div>
+
+    <h2>1. The Ethereum Wallet Pipeline</h2>
+    <p>A modern cryptocurrency wallet employs a sequence of highly specialized cryptographic primitives. Each step transforms the data, moving from high-entropy generation to hierarchical derivation, public-key cryptography, and finally to an error-resistant deterministic address.</p>
+    
+    <div class="pipeline-box">
+        Entropy (128-256 bits) <br>
+        <span class="pipeline-arrow">↓ BIP-39 ↓</span> <br>
+        Mnemonic Phrase ➔ Master Seed <br>
+        <span class="pipeline-arrow">↓ BIP-32 / BIP-44 ↓</span> <br>
+        Derived Private Key (k) <br>
+        <span class="pipeline-arrow">↓ secp256k1 ↓</span> <br>
+        Public Key (Q) <br>
+        <span class="pipeline-arrow">↓ Keccak-256 ↓</span> <br>
+        Raw Ethereum Address <br>
+        <span class="pipeline-arrow">↓ EIP-55 ↓</span> <br>
+        Checksummed Address
+    </div>
+
+    <h2>2. Deep Dive: Cryptographic Standards & Roles</h2>
+    <ul>
+        <li><strong>BIP-39 (Mnemonic Sentence & Seed Generation):</strong> Humans cannot reliably memorize 128–256 bits of raw entropy. BIP-39 encodes the entropy plus a short checksum (ENT/32 bits) as a sequence of 12 to 24 words from a fixed 2048-word list (11 bits per word). The mnemonic is then fed to PBKDF2-HMAC-SHA512 (2048 iterations, salt = "mnemonic" + optional passphrase) to output a 512-bit Master Seed. The optional passphrase gives a second factor: a different passphrase yields a completely different wallet.</li>
+        <li><strong>BIP-32 (Hierarchical Deterministic Derivation):</strong> From the Master Seed, HMAC-SHA512 produces a master private key and a <em>chain code</em>. Each child key is derived from its parent key and chain code, so the whole tree is recoverable from one seed. <em>Hardened</em> derivation (marked with an apostrophe) uses the parent private key as input, so a leaked child key plus the chain code cannot be used to compute its siblings or its parent.</li>
+        <li><strong>secp256k1 (Elliptic-Curve Cryptography):</strong> Takes the derived private key k and computes the public key Q = k·G by scalar multiplication on the curve. This is a one-way function: its security rests on the Elliptic Curve Discrete Logarithm Problem (recovering k from Q is computationally infeasible). It is the foundation of ECDSA digital signatures.</li>
+        <li><strong>EIP-55 (Mixed-case Checksum Encoding):</strong> Raw addresses lack built-in error detection. EIP-55 computes Keccak-256 of the lowercase hex address (without the <code>0x</code> prefix) and, for each hex letter, uses upper case if the corresponding hash nibble is ≥ 8. The checksum is hidden in the capitalization, so the underlying value does not change.</li>
+    </ul>
+
+    <h2>3. Distinguishing Core Cryptographic Concepts</h2>
+    <div class="concept-grid">
+        <div class="concept-card">
+            <h4>Generation vs. Derivation</h4>
+            <p><strong>Generation</strong> relies on entropy to create unpredictable data (the mnemonic). <strong>Derivation</strong> (BIP-32) is strictly deterministic; it applies mathematical formulas (HMAC-SHA512) to compute child keys from a parent key, guaranteeing that the same seed always yields the same tree.</p>
+        </div>
+        <div class="concept-card">
+            <h4>Public-Key Cryptography vs. Hashing</h4>
+            <p><strong>Public-Key Cryptography</strong> (secp256k1) relies on a mathematical relationship between a private and a public key: data signed with the private key can be verified by anyone with the public key. It preserves algebraic structure. <strong>Hashing</strong> (Keccak) is a one-way, keyless function that maps arbitrary-size input to a fixed-size digest with a strong avalanche effect, so that no algebraic structure of the input survives in the output.</p>
+        </div>
+        <div class="concept-card">
+            <h4>Checksums vs. Encoding</h4>
+            <p><strong>Encoding</strong> (Hexadecimal, Base58) is a reversible change of representation, readable by anyone. It provides no secrecy (encoding ≠ encryption) and no integrity. A <strong>Checksum</strong> (EIP-55, the BIP-39 checksum bits) is redundancy computed deterministically from the data, used only for error detection. The two can be combined: Base58Check, for instance, is an encoding with an embedded checksum.</p>
+        </div>
+    </div>
+
+    <h2>4. Historical Context</h2>
+    <div class="timeline">
+        <div class="timeline-item"><strong>1977 - RSA:</strong> The pioneering public-key cryptosystem based on prime factorization. While revolutionary, it requires massive key sizes compared to modern ECC.</div>
+        <div class="timeline-item"><strong>2001 - SHA-2 / SHA-512:</strong> Standardized by NIST. A robust family of hash functions (using the Merkle-Damgård construction).</div>
+        <div class="timeline-item"><strong>2012 - BIP-32:</strong> Introduction of Hierarchical Deterministic (HD) wallets for Bitcoin, solving the issue of backing up multiple independent keys.</div>
+        <div class="timeline-item"><strong>2013 - BIP-39:</strong> The creation of mnemonic phrases, making crypto backups human-readable and resilient.</div>
+        <div class="timeline-item"><strong>2014 - BIP-44:</strong> Standardization of paths for multi-account, multi-currency HD wallets.</div>
+        <div class="timeline-item"><strong>2015 - SHA-3 (Based on Keccak):</strong> NIST standardizes SHA-3. Ethereum utilizes the original Keccak-256 algorithm before NIST altered the padding parameters.</div>
+        <div class="timeline-item"><strong>2016 - EIP-55:</strong> Proposed by Vitalik Buterin and Alex Van de Sande, it introduces a mixed-case checksum for Ethereum addresses, backward-compatible with the plain hex format.</div>
+    </div>
+
+    <h2>5. Architectural Discussion: Separation of Concerns</h2>
+    <div class="discussion">
+        <p>The pipeline uses several primitives rather than a single algorithm because of <strong>Separation of Concerns</strong>: each step needs different mathematical properties, and no single primitive provides all of them.</p>
+        <ul>
+            <li><strong>BIP-39 / BIP-32 / BIP-44 (Key Management):</strong> Require determinism (the same mnemonic must always give the same keys) and a one-way, well-mixed derivation (HMAC-SHA512, PBKDF2) so that child keys reveal nothing about parents or siblings. The mnemonic carries 128–256 bits of entropy, so it is not a "weak password"; PBKDF2 mainly produces the 512-bit seed and adds cost to guessing an optional passphrase.</li>
+            <li><strong>secp256k1 (Signatures):</strong> Requires an algebraic group structure so that a signature can be verified publicly with a short public key, without revealing the private key. Hash-based signature schemes exist (Lamport, SPHINCS+), but they have much larger signatures and keys, which is why ECC is the practical choice here.</li>
+            <li><strong>Keccak-256 (Hashing):</strong> Requires preimage, second-preimage and collision resistance, plus uniformly distributed outputs. It compresses the 64-byte public key into a fixed 20-byte address. Since the address is only a hash of the public key, the public key stays hidden until the first transaction is signed. This also helps against quantum attacks: Shor's algorithm breaks ECC but does not apply to hashes, while Grover's algorithm only gives a quadratic speedup (256 → ~128 bits of security).</li>
+            <li><strong>EIP-55 (Checksum):</strong> Requires only sensitivity to accidental typos (changing a single character changes the expected capitalization pattern). It needs no cryptographic hardness, since it is not meant to stop an adversary, only to catch human errors.</li>
+        </ul>
+        <p>Compartmentalizing these roles gives a good balance of security, usability and efficiency, and lets each primitive be analysed on its own. The trade-off is that some choices (secp256k1, the address format) are embedded in the protocol, so replacing them later, for example with post-quantum signatures, would require a coordinated network upgrade rather than a simple local change.</p>
+    </div>
+
+    <h2>6. Statistical Properties</h2>
+    <ul>
+        <li><strong>Mnemonic entropy:</strong> 12 words = 128 bits of entropy + 4 checksum bits = 132 bits (12 × 11); 24 words = 256 + 8 = 264 bits (24 × 11). Guessing a 128-bit secret has a success probability of 2<sup>-128</sup> per attempt.</li>
+        <li><strong>Address space:</strong> addresses are 160 bits long (2<sup>160</sup> values). By the birthday bound, a collision between two random addresses is expected only after about 2<sup>80</sup> addresses, which is infeasible.</li>
+        <li><strong>Avalanche effect:</strong> flipping one input bit of Keccak-256 changes each output bit with probability ≈ 1/2, so about 128 of the 256 output bits differ. The output of a good hash is statistically indistinguishable from uniform.</li>
+        <li><strong>EIP-55 error detection:</strong> a random 40-hex-character address contains on average about 15 letters (a–f), each with a 1/2 chance of matching the checksum's expected case. A random typo therefore passes unnoticed with probability ≈ 2<sup>-15</sup> ≈ 0.003%.</li>
+        <li><strong>BIP-39 checksum:</strong> a mistyped word list passes the checksum with probability 2<sup>-4</sup> (12 words) or 2<sup>-8</sup> (24 words).</li>
+    </ul>
+
+    <h2>7. Practical Experiment</h2>
+    <p>To see each step in practice, I imported a <em>test-only</em> mnemonic into a wallet and reproduced the pipeline in Python. I never used a real seed phrase.</p>
+    <div class="code-block">
+from eth_account import Account
+from eth_utils import keccak
+
+Account.enable_unaudited_hdwallet_features()
+m = "test test test test test test test test test test test junk"
+acct = Account.from_mnemonic(m, account_path="m/44'/60'/0'/0/0")
+print("Address:", acct.address)   # checksummed (EIP-55) address
+
+# avalanche: inputs differing by one bit
+a = keccak(b"hello").hex()
+b = keccak(b"hellp").hex()
+diff = bin(int(a, 16) ^ int(b, 16)).count("1")
+print(diff, "of 256 bits differ")
+
+<div class="code-output"># Execution Output:
+Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+133 of 256 bits differ</div>
+    </div>
+    <p>Changing the last index of the path (<code>/0</code> → <code>/1</code>) gives the next account of the same wallet, which shows BIP-44 derivation at work. Adding a passphrase produces an entirely different wallet.</p>
+
+</body>
+</html>
