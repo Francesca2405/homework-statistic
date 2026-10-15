@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Homework 1 - Elliptic Curve Cryptography</title>
+<style>
+body{font-family:"Palatino Linotype","Book Antiqua",Palatino,serif;line-height:1.6;color:#222;max-width:900px;margin:0 auto;padding:30px;background:#fafafa}
+h1{text-align:center;color:#111;margin-bottom:5px}
+.subtitle{text-align:center;color:#555;font-style:italic;margin-bottom:40px}
+h2{color:#2c3e50;border-bottom:1px solid #ccc;padding-bottom:5px;margin-top:40px}
+h3{color:#34495e;margin-top:25px}
+p{text-align:justify}
+.output-box{background:#eaeaea;border-left:4px solid #2c3e50;padding:15px;font-family:"Courier New",monospace;font-size:13px;white-space:pre-wrap;overflow-x:auto}
+.discussion{background:#e8f4f8;padding:20px;border-radius:8px;border:1px solid #bce8f1;margin-top:20px}
+.math-block{background:#fff;padding:10px;border:1px dashed #ccc;text-align:center;font-style:italic}
+.visual-container{display:flex;flex-direction:column;align-items:center;background:#fff;padding:20px;border:1px solid #ddd;border-radius:8px;margin-top:20px;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+.controls{margin-bottom:15px;background:#f8f9fa;padding:15px;border-radius:8px;border:1px solid #ccc;text-align:center}
+.controls input,.controls select{padding:5px;font-size:15px;margin:0 6px;text-align:center}
+.controls input{width:60px}
+.controls button{padding:6px 14px;font-size:15px;background:#2c3e50;color:#fff;border:none;border-radius:4px;cursor:pointer;margin:2px}
+.controls button:hover{background:#1a252f}
+canvas{background:#fff;border:1px solid #aaa;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:15px;margin-top:10px;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:5px}
+.color-box{width:12px;height:12px;border-radius:50%}
+.nav-bar{margin-bottom:20px} .nav-btn{text-decoration:none;color:#2c3e50;font-weight:bold;border:1px solid #2c3e50;padding:5px 15px;border-radius:4px;transition:0.3s} .nav-btn:hover{background:#2c3e50;color:#fff}
+</style>
+</head>
+<body>
+<div class="nav-bar">
+    <a href="index.html" class="nav-btn">← Back to Home</a>
+</div>
+<h1>Homework 1: Public-Key Cryptography in Ethereum</h1>
+<div class="subtitle">Statistical Analysis and Cryptographic Primitives Exploration</div>
+
+<h2>1. Mathematical Background</h2>
+<p>Public-key cryptography in Ethereum is based on Elliptic Curve Cryptography (ECC) with the <code>secp256k1</code> curve. To see the mechanics without 256-bit parameters, this homework uses a toy curve over a finite field.</p>
+<div class="math-block">
+  Curve: y² ≡ x³ + 7 (mod 17)<br>
+  Base point: G = (1, 5)<br>
+  <span id="order-info"></span>
+</div>
+<p><strong>G is fixed</strong>, as in the real protocol: the only variable is the private key <em>k</em>. The curve has 18 points (17 affine + the point at infinity ∞), but G generates only a <em>subgroup</em> whose order <em>n</em> is computed by the script (the smallest n with nG = ∞). Consequently kG is periodic in k: k and k + n give the same public key, and k = n gives ∞, which is not a valid key.</p>
+
+<h2>2. Interactive Key Generation &amp; Visualization</h2>
+<p>Choose a private key and watch the point sequence 1G, 2G, …, kG being built step by step on the finite field.</p>
+<div class="visual-container">
+  <div class="controls">
+    <label for="k-input"><strong>Private key k:</strong></label>
+    <input type="number" id="k-input" min="1" max="60" value="6">
+    <label for="delay">step (ms):</label>
+    <input type="number" id="delay" min="50" max="3000" step="50" value="600">
+    <br>
+    <button onclick="run(true)">Generate (animated)</button>
+    <button onclick="run(false)">Instant</button>
+  </div>
+  <canvas id="curveCanvas" width="500" height="500"></canvas>
+  <div class="legend">
+    <div class="legend-item"><span class="color-box" style="background:#ff3b30"></span> 1G (Base Point)</div>
+    <div class="legend-item"><span class="color-box" style="background:#ff9500"></span> Intermediate Points</div>
+    <div class="legend-item"><span class="color-box" style="background:#af52de"></span> Public Key kG</div>
+    <div class="legend-item"><span class="color-box" style="background:#c7c7cc"></span> Valid Curve Points</div>
+  </div>
+</div>
+
+<h3>Algorithm Execution Trace</h3>
+<div id="out-keys" class="output-box"></div>
+
+<h2>3. Statistical Exploration</h2>
+<p>Choose a base point (every point of order ≥ 3 is listed with its order). The script computes kG for one full period, k = 1 … n−1, and analyses the outputs. Compare the default G (order 9) with a generator of the whole group (order 18).</p>
+<div class="controls" style="display:inline-block"><label for="base-sel"><strong>Base point:</strong></label><select id="base-sel" onchange="showStats()"></select></div>
+<div id="out-stats" class="output-box"></div>
+
+<h2>4. Theoretical Discussion</h2>
+<div class="discussion">
+  <p>The measurements above separate the properties of an elliptic-curve one-way function from those of a cryptographic hash function.</p>
+  <h3>1. Uniformity and bit distribution</h3>
+  <p><strong>Hash functions</strong> must look uniformly random: every output bit is 0 or 1 with probability 1/2. <strong>ECC</strong> need not: over this tiny field the coordinates are values in 0…16 stored in 5 bits, so the top bit is almost always 0, and only the points of the subgroup ever appear. What matters for ECC is that k ↦ kG is injective over one period (each point appears exactly once) and that inverting it requires solving the ECDLP.</p>
+  <h3>2. Avalanche effect</h3>
+  <p><strong>Hash functions</strong> demand that flipping one input bit flips about 50% of the output bits. The Hamming-distance measurements above show that ECC points do not behave this way, and it is not required: security rests on the intractability of the ECDLP, not on bit diffusion.</p>
+  <h3>3. Algebraic structure: wanted in ECC, forbidden in hashes</h3>
+  <p>Scalar multiplication is a group homomorphism: (k₁+k₂)G = k₁G + k₂G, as verified exhaustively above. This structure makes signatures, key derivation and ECDH possible, but it would be a fatal weakness in a hash, which must have no exploitable relation between related inputs. The linear correlation between k and the coordinates should also be read in this light: for a real curve it is negligible, here it is only a small-sample effect.</p>
+  <h3>4. Where they meet in Ethereum</h3>
+  <p>An Ethereum address is the last 20 bytes of keccak256 applied to the public key: the elliptic-curve one-way function (private → public key) and the hash (public key → address) are used together, each for the property it is designed to have.</p>
+</div>
+
+<script>
+const p = 17, a = 0, b = 7;
+const G = { x: 1, y: 5 };
+const mod = (n, m = p) => ((n % m) + m) % m;
+const same = (P, Q) => (!P && !Q) || (P && Q && P.x === Q.x && P.y === Q.y);
+const fmt = P => P ? `(${P.x}, ${P.y})` : '∞';
+
+function modInverse(n) {
+  n = mod(n);
+  for (let i = 1; i < p; i++) if (mod(n * i) === 1) return i;
+  return null;
+}
+function pointDouble(P) {
+  if (!P || P.y === 0) return null;
+  const m = mod(mod(3 * P.x * P.x + a) * modInverse(2 * P.y));
+  const x3 = mod(m * m - 2 * P.x);
+  return { x: x3, y: mod(m * (P.x - x3) - P.y) };
+}
+function pointAdd(P, Q) {
+  if (!P) return Q;
+  if (!Q) return P;
+  if (P.x === Q.x && mod(P.y + Q.y) === 0) return null;
+  if (P.x === Q.x && P.y === Q.y) return pointDouble(P);
+  const m = mod(mod(Q.y - P.y) * modInverse(Q.x - P.x));
+  const x3 = mod(m * m - P.x - Q.x);
+  return { x: x3, y: mod(m * (P.x - x3) - P.y) };
+}
+// Order of P: smallest n with nP = infinity
+function order(P) {
+  let Q = P, n = 1;
+  do { Q = pointAdd(Q, P); n++; } while (Q);
+  return n;
+}
+// Double-and-add; handles the point at infinity safely
+function mulFast(k, P, log) {
+  let R = null, A = P, t = k;
+  while (t > 0) {
+    if (t % 2 === 1) { R = pointAdd(R, A); if (log) log(`[FAST - ADD]    result = ${fmt(R)}`); }
+    A = pointDouble(A);
+    t = Math.floor(t / 2);
+    if (t > 0 && log) log(`[FAST - DOUBLE] addend = ${fmt(A)}`);
+  }
+  return R;
+}
+
+/* ---------- Canvas ---------- */
+const canvas = document.getElementById('curveCanvas');
+const ctx = canvas.getContext('2d');
+const pad = 40, cell = (canvas.width - 2 * pad) / 16;
+const cx = gx => pad + gx * cell;
+const cy = gy => pad + (16 - gy) * cell;
+const allValidPoints = [];
+for (let x = 0; x < p; x++) for (let y = 0; y < p; y++)
+  if (mod(y * y) === mod(x * x * x + b)) allValidPoints.push({ x, y });
+
+function drawGraph(steps, final) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 16; i++) {
+    ctx.beginPath(); ctx.moveTo(cx(i), cy(0)); ctx.lineTo(cx(i), cy(16)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx(0), cy(i)); ctx.lineTo(cx(16), cy(i)); ctx.stroke();
+    ctx.fillStyle = '#666'; ctx.font = '10px Arial';
+    ctx.textAlign = 'center'; ctx.fillText(i, cx(i), cy(0) + 15);
+    ctx.textAlign = 'right'; ctx.fillText(i, cx(0) - 10, cy(i) + 3);
+  }
+  allValidPoints.forEach(P => {
+    ctx.beginPath(); ctx.arc(cx(P.x), cy(P.y), 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#c7c7cc'; ctx.fill();
+  });
+  // group the labels of repeated points (k > n wraps around)
+  const seen = new Map(), path = [];
+  steps.forEach(s => {
+    if (!s.P) return;
+    const key = s.P.x + ',' + s.P.y;
+    if (!seen.has(key)) seen.set(key, { P: s.P, labels: [] });
+    seen.get(key).labels.push(s.i);
+    path.push(s.P);
+  });
+  if (path.length > 1) {
+    ctx.setLineDash([5, 3]); ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(cx(path[0].x), cy(path[0].y));
+    path.slice(1).forEach(P => ctx.lineTo(cx(P.x), cy(P.y)));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  const cur = steps.length ? steps[steps.length - 1].P : null;
+  seen.forEach(({ P, labels }) => {
+    const isCur = cur && same(P, cur);
+    let color = '#ff9500';
+    if (labels.includes(1)) color = '#ff3b30';
+    if (final && isCur) color = '#af52de';
+    ctx.beginPath(); ctx.arc(cx(P.x), cy(P.y), 8, 0, 2 * Math.PI);
+    ctx.fillStyle = color; ctx.fill();
+    if (isCur) { ctx.lineWidth = 2.5; ctx.strokeStyle = '#000'; ctx.stroke(); }
+    let text = labels.slice(0, 3).map(i => i + 'G').join(',') + (labels.length > 3 ? '…' : '');
+    if (final && isCur) text += ' (Pub)';
+    ctx.fillStyle = '#333'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'left';
+    ctx.fillText(text, cx(P.x) + 12, cy(P.y) + 3);
+  });
+}
+
+/* ---------- Visualization / trace ---------- */
+const out = document.getElementById('out-keys');
+const nG = order(G);
+let timer = null;
+
+function finish(k, steps) {
+  const log = l => out.textContent += l + '\n';
+  log(`\n--- FAST METHOD (double-and-add, k=${k} = ${k.toString(2)} in binary) ---`);
+  const fast = mulFast(k, G, log);
+  log(`\nTOY PUBLIC KEY Q = ${k}G = ${fmt(fast)}`);
+  log(same(fast, steps[steps.length - 1].P) ? 'Check: slow and fast methods agree ✔' : 'MISMATCH between slow and fast method ✘');
+  if (!fast) log(`Note: k is a multiple of the order n=${nG}, so kG = ∞ (not a valid public key).`);
+  else if (k > nG) log(`Note: k > n, so kG = ${k % nG}G (k and k+${nG} give the same key).`);
+}
+
+function run(animate) {
+  clearTimeout(timer);
+  const k = parseInt(document.getElementById('k-input').value);
+  if (!(k >= 1 && k <= 60)) { alert('Please enter a k between 1 and 60'); return; }
+  const steps = []; let cur = null;
+  for (let i = 1; i <= k; i++) { cur = pointAdd(cur, G); steps.push({ i, P: cur }); }
+  const line = s => `${s.i}G = ${fmt(s.P)}\n`;
+  out.textContent = `Order of G: n = ${nG} (${nG}G = ∞)\n\n--- SLOW METHOD (step-by-step, k=${k}) ---\n`;
+  if (!animate) {
+    steps.forEach(s => out.textContent += line(s));
+    drawGraph(steps, true); finish(k, steps); return;
+  }
+  const delay = parseInt(document.getElementById('delay').value) || 600;
+  let s = 0;
+  (function tick() {
+    out.textContent += line(steps[s]); s++;
+    const done = s === steps.length;
+    drawGraph(steps.slice(0, s), done);
+    if (done) finish(k, steps); else timer = setTimeout(tick, delay);
+  })();
+}
+
+/* ---------- Statistics ---------- */
+const bases = allValidPoints.map(P => ({ P, n: order(P) })).filter(o => o.n >= 3);
+const sel = document.getElementById('base-sel');
+bases.forEach((o, i) => {
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = `${fmt(o.P)} - order ${o.n}`;
+  if (same(o.P, G)) opt.selected = true;
+  sel.appendChild(opt);
+});
+
+const bitsOf = P => P.x.toString(2).padStart(5, '0') + P.y.toString(2).padStart(5, '0');
+const ham = (u, v) => [...u].filter((c, i) => c !== v[i]).length;
+function pearson(u, v) {
+  const m = u.length, mu = u.reduce((s, c) => s + c, 0) / m, mv = v.reduce((s, c) => s + c, 0) / m;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < m; i++) { sxy += (u[i] - mu) * (v[i] - mv); sxx += (u[i] - mu) ** 2; syy += (v[i] - mv) ** 2; }
+  return sxy / Math.sqrt(sxx * syy);
+}
+function histogram(label, vals) {
+  const f = Array(p).fill(0); vals.forEach(v => f[v]++);
+  const E = vals.length / p;
+  const chi = f.reduce((s, c) => s + (c - E) ** 2 / E, 0);
+  let t = `${label}-COORDINATE FREQUENCIES (value | count):\n`;
+  f.forEach((c, v) => t += `${String(v).padStart(2)} | ${'█'.repeat(c)} ${c}\n`);
+  return t + `chi-square vs uniform on 0..16 = ${chi.toFixed(2)} (df=16, 5% critical value 26.30; expected counts are small, so only indicative)\n\n`;
+}
+
+function showStats() {
+  const { P: B, n } = bases[sel.value];
+  const T = [null]; let Q = null;
+  for (let i = 1; i < n; i++) { Q = pointAdd(Q, B); T.push(Q); }
+  const pts = T.slice(1);
+  const ks = pts.map((_, i) => i + 1);
+  const distinct = new Set(pts.map(P => P.x + ',' + P.y)).size;
+
+  let t = `Base point ${fmt(B)}, order n = ${n}. Analysed k = 1..${n - 1} (${pts.length} points, nG = ∞ excluded).\n`;
+  t += `Distinct outputs: ${distinct}/${pts.length} -> k ↦ kG is injective over one period.\n\n`;
+  t += histogram('X', pts.map(P => P.x)) + histogram('Y', pts.map(P => P.y));
+
+  // bit distribution, fixed 5 bits per coordinate (10 bits per point)
+  const perPos = Array(10).fill(0); let ones = 0;
+  pts.forEach(P => [...bitsOf(P)].forEach((c, i) => { if (c === '1') { ones++; perPos[i]++; } }));
+  const tot = pts.length * 10;
+  t += `BIT DISTRIBUTION (x as 5 bits || y as 5 bits):\nZeros: ${tot - ones} | Ones: ${ones} (${(100 * ones / tot).toFixed(1)}% ones, ideal 50%)\n`;
+  t += `Ones per bit position (x4..x0 y4..y0): ${perPos.join(' ')}  out of ${pts.length} each\n`;
+  t += `(the top bit of a coordinate is 1 only for the value 16: p=17 is not a power of 2)\n\n`;
+
+  // avalanche
+  let s1 = 0, c1 = 0;
+  for (let k = 1; k < n - 1; k++) { s1 += ham(bitsOf(T[k]), bitsOf(T[k + 1])); c1++; }
+  let s2 = 0, c2 = 0;
+  for (let k = 1; k < n; k++) for (let j = 0; j < 5; j++) {
+    const k2 = k ^ (1 << j);
+    if (k2 >= 1 && k2 < n && k2 !== k) { s2 += ham(bitsOf(T[k]), bitsOf(T[k2])); c2++; }
+  }
+  t += `AVALANCHE-LIKE BEHAVIOUR (Hamming distance between outputs, out of 10 bits; hash ideal = 5.0):\n`;
+  t += `k -> k+1:            mean ${(s1 / c1).toFixed(2)} bits (${(10 * s1 / c1).toFixed(1)}%)\n`;
+  t += `1 flipped bit of k:  mean ${(s2 / c2).toFixed(2)} bits (${(10 * s2 / c2).toFixed(1)}%)\n\n`;
+
+  // correlation
+  t += `CORRELATION between input and output (Pearson r):\n`;
+  t += `r(k, x) = ${pearson(ks, pts.map(P => P.x)).toFixed(3)} | r(k, y) = ${pearson(ks, pts.map(P => P.y)).toFixed(3)}\n\n`;
+
+  // homomorphism
+  let ok = 0;
+  for (let k1 = 1; k1 < n; k1++) for (let k2 = 1; k2 < n; k2++)
+    if (same(pointAdd(T[k1], T[k2]), T[(k1 + k2) % n])) ok++;
+  t += `ALGEBRAIC STRUCTURE: (k1+k2)G = k1G + k2G holds for ${ok}/${(n - 1) ** 2} pairs (a hash would show no such relation).`;
+  document.getElementById('out-stats').textContent = t;
+}
+
+/* ---------- Init ---------- */
+document.getElementById('order-info').textContent = `Order of G in this group: n = ${nG}  (${nG}G = ∞)`;
+showStats();
+run(false);
+</script>
+</body>
+</html>
