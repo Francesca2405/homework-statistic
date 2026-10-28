@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homework 4 - Stochastic Processes & Penetration Models</title>
+<style>
+body{font-family:Georgia,"Palatino Linotype","Book Antiqua",serif;line-height:1.6;color:#3d4a3e;max-width:1100px;margin:0 auto;padding:40px 30px;background:#FAF6F0}
+.nav-btn{text-decoration:none;color:#4a5c4d;font-weight:bold;border:2px solid #a3b899;padding:8px 18px;border-radius:12px;background:#FFFDF9}
+.nav-btn:hover{background:#728c75;color:#FFFDF9;border-color:#728c75}
+h1{text-align:center;color:#4a5c4d;margin:30px 0 5px;font-weight:normal}
+.subtitle{text-align:center;color:#728c75;font-style:italic;margin-bottom:36px}
+h2{color:#4a5c4d;border-bottom:2px solid #dcd4c4;padding-bottom:5px;margin-top:50px;font-weight:normal}
+h3{color:#5c705e;margin-top:22px;font-weight:normal}
+p,li{text-align:justify}
+.box{background:#FFFDF9;padding:24px;border:1px solid #e0dacf;border-radius:16px;margin-top:20px;box-shadow:0 6px 15px rgba(114,140,117,.04)}
+.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-bottom:12px}
+.panel{background:#F8F5EE;padding:16px;border-radius:12px;border:1px solid #e6dfd3}
+.panel h4{margin:0 0 10px;color:#728c75;border-bottom:1px dashed #c0ccbe;padding-bottom:5px;font-size:1.05em}
+.ig{margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.ig label{font-weight:bold;font-size:.9em;color:#5c705e}
+.ig select,.ig input{padding:8px;border-radius:6px;border:1px solid #c0ccbe;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box}
+.ig input:disabled{background:#eee;color:#999}
+.hint{font-size:.8em;color:#7a7060}
+button{padding:11px 18px;font-size:15px;background:#728c75;color:#FFFDF9;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:4px 6px 0 0}
+button:hover{background:#4a5c4d}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:16px}
+.fig{background:#FFFDF9;border:1px solid #e0dacf;border-radius:14px;padding:10px;box-shadow:0 4px 10px rgba(0,0,0,.03)}
+.fig svg{width:100%;height:auto;display:block}
+.cap{font-size:.86em;color:#5c705e;font-style:italic;margin:8px 2px 0;text-align:left}
+table{border-collapse:collapse;width:100%;font-size:.9em;display:block;overflow-x:auto;margin-top:12px}
+td,th{border:1px solid #d2ded0;padding:5px 9px;text-align:right;vertical-align:top;white-space:nowrap}
+td:first-child,th:first-child{text-align:left}
+th{background:#dfe9dc}
+.th{color:#7a7060;font-size:.9em}
+.note{background:#F4EFE6;border-left:4px solid #728c75;padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px;font-size:.93em}
+.discussion{background:#EDF3EC;padding:24px;border-radius:16px;border:1px solid #d2ded0;margin-top:25px}
+.small{font-size:.9em;color:#5c705e}
+</style>
+</head>
+<body>
+<a href="index.html" class="nav-btn">← Back to Home</a>
+<h1>Homework 4: Stochastic Penetration Models</h1>
+<div class="subtitle">Law of Large Numbers (LLN) & Central Limit Theorem (CLT) simulations</div>
+
+<h2>1. The simulation engine</h2>
+<p>Each of the <em>m</em> attackers moves through <em>n</em> systems. On system <em>i</em> the attacker obtains a score <em>X<sub>i</sub></em>; the increments are i.i.d. and the attacker's aggregate result is the random walk <em>S<sub>k</sub> = X₁ + … + X<sub>k</sub></em>. The attackers are independent copies of the same walk. Two models are compared: <strong>Bernoulli</strong> (<em>X<sub>i</sub></em> ∈ {0,1}, P(1) = p, mean μ = p, variance σ² = p(1−p)) and the symmetric <strong>Rademacher</strong> model (<em>X<sub>i</sub></em> = ±1 with probability ½, μ = 0, σ² = 1). Everything below is computed in the browser with a seeded generator, so the same seed always gives the same figures.</p>
+
+<div class="box">
+<div class="panel-grid">
+<div class="panel"><h4>⚙️ Process</h4>
+<div class="ig"><label>Distribution model</label><select id="model" onchange="onModel()"><option value="rademacher">Rademacher (−1, +1)</option><option value="bernoulli">Bernoulli (0, 1)</option></select></div>
+<div class="ig"><label>Probability of success p</label><input type="number" id="p" min="0.01" max="0.99" step="0.01" value="0.5" onchange="runAll()"><span class="hint">Used only by the Bernoulli model (kept in [0.01, 0.99])</span></div>
+<div class="ig"><label>Random seed</label><input type="number" id="seed" value="2026" onchange="runAll()"></div>
+</div>
+<div class="panel"><h4>👥 Scale of the attack</h4>
+<div class="ig"><label>Number of systems n (10 to 2000)</label><input type="number" id="n" min="10" max="2000" step="10" value="500" onchange="runMain()"><span class="hint">Length of each random walk</span></div>
+<div class="ig"><label>Number of attackers m (10 to 5000)</label><input type="number" id="m" min="10" max="5000" step="50" value="1000" onchange="runMain()"><span class="hint">Independent walks; 150 of them are drawn</span></div>
+</div>
+<div class="panel"><h4>📊 Quantity to plot</h4>
+<div class="ig"><label>Quantity</label><select id="metric" onchange="runMain()">
+<option value="total">Total score Sₙ</option>
+<option value="average">Average score Sₙ/n (LLN)</option>
+<option value="normalized" selected>Normalized Sₙ/√n (CLT, Rademacher)</option>
+<option value="standardized">Standardized (Sₙ − nμ)/(σ√n) (CLT, any p)</option>
+<option value="donsker">Scaled walk (S⌊nt⌋ − ⌊nt⌋μ)/(σ√n)</option></select></div>
+<div class="ig"><label>Tolerance ε for the LLN</label><input type="number" id="eps" min="0.01" max="1" step="0.01" value="0.1" onchange="runAll()"><span class="hint">Used for P(|Sₙ/n − μ| &gt; ε)</span></div>
+</div>
+</div>
+<button onclick="runAll()">Run everything (sections 1 to 3)</button>
+<div class="note" id="clampnote" style="display:none"></div>
+<div class="figrow">
+<div class="fig"><div id="figTraj"></div></div>
+<div class="fig"><div id="figHist"></div></div>
+</div>
+<p class="cap" id="capMain"></p>
+<div id="statsTable"></div>
+</div>
+
+<h2>2. Behaviour as n increases</h2>
+<p>The homework asks how the three quantities change with <em>n</em>, so this study reuses the model chosen above and simulates <em>m</em><sub>s</sub> attackers on a single walk of 2000 steps, reading the score at <em>n</em> = 10, 25, 50, 100, 250, 500, 1000, 2000. Three things are measured: the variance of <em>S<sub>n</sub></em>, <em>S<sub>n</sub>/n</em> and <em>S<sub>n</sub>/√n</em> against their theoretical values (<em>nσ²</em>, <em>σ²/n</em>, <em>σ²</em>); the frequency of large deviations <em>P(|S<sub>n</sub>/n − μ| &gt; ε)</em> against the Chebyshev and Hoeffding bounds, which is exactly convergence in probability; and the Kolmogorov distance between the law of the standardized score and N(0,1).</p>
+<div class="box">
+<div class="panel-grid"><div class="panel"><div class="ig" style="margin:0"><label>Attackers in this study (m<sub>s</sub>, 200 to 5000)</label><input type="number" id="ms" min="200" max="5000" step="100" value="2000" onchange="runAll()"></div></div></div>
+<button onclick="scaleStudy()" style="background:#e8b86b;color:#3d4a3e">Re-run the study</button>
+<div class="note" id="scaleSummary"></div>
+<div class="figrow">
+<div class="fig"><div id="figVar"></div></div>
+<div class="fig"><div id="figLLN"></div></div>
+<div class="fig"><div id="figKS"></div></div>
+</div>
+<p class="cap">Figure 2. Left: variances (points = simulation, dashed lines = theory), log-log scale. Middle: LLN, empirical probability of a deviation larger than ε and its two bounds. Right: Kolmogorov distance of the standardized score from N(0,1); the "exact" curve is computed from the exact binomial law, the points from the simulated attackers, and the dashed horizontal line is the 5% noise level 1.36/√m<sub>s</sub> of the empirical distance.</p>
+<div id="scaleTable"></div>
+</div>
+
+<h2>3. What the number of attackers m changes</h2>
+<p>For one attacker the law of <em>S<sub>n</sub></em> does not depend on <em>m</em>; <em>m</em> only decides how well the simulated sample describes it. To measure this, the experiment below fixes <em>n</em> = 100, estimates Var(<em>S<sub>n</sub></em>/√<em>n</em>) from <em>m</em> attackers, and repeats the whole estimate 40 times for each <em>m</em>. The spread of the estimate should shrink like σ²√(2/(<em>m</em>−1)).</p>
+<div class="box">
+<button onclick="mcStudy()" style="background:#e8b86b;color:#3d4a3e">Re-run the study</button>
+<div class="figrow"><div class="fig"><div id="figMC"></div></div><div class="fig" style="display:flex;align-items:center"><div id="mcTable" style="width:100%"></div></div></div>
+<p class="cap">Figure 3. Monte Carlo error of the variance estimate as a function of m (log-log): slope −1/2, so quadrupling the number of attackers halves the error.</p>
+</div>
+
+<h2>4. Interpretation and discussion</h2>
+<div class="discussion">
+<h3>The roles of n and m</h3>
+<p><strong>n</strong> is the size of the attack surface: the number of systems an attacker goes through, hence the length of the walk. It changes the distribution of each attacker's result. <strong>m</strong> is the number of attackers observed, hence the sample from which we estimate that distribution; it does not change the law of one attacker's score, only the accuracy of the picture (Section 3: error of order 1/√m). If instead one adds up the results of all attackers, <em>T = Σ<sub>j</sub> S<sub>n</sub><sup>(j)</sup></em>, this is a sum of <em>mn</em> i.i.d. increments, with mean <em>mnμ</em> and variance <em>mnσ²</em>: its relative fluctuation shrinks as 1/√(<em>mn</em>), so the defender facing many attackers on many systems sees a more predictable aggregate, while in the zero-mean case the typical size of the aggregate still grows like √(<em>mn</em>).</p>
+
+<h3>Variance under the three normalizations</h3>
+<table class="th" style="width:auto"><tr><th>Quantity</th><th>Mean</th><th>Variance</th><th>Behaviour as n grows</th></tr>
+<tr><td>Sₙ</td><td>nμ</td><td>nσ²</td><td>spreads out: the walk drifts away from its mean</td></tr>
+<tr><td>Sₙ/n</td><td>μ</td><td>σ²/n</td><td>collapses on μ (degenerate limit)</td></tr>
+<tr><td>Sₙ/√n</td><td>μ√n</td><td>σ²</td><td>constant variance; mean is 0 only if μ = 0</td></tr></table>
+<p>The table is what Figure 2 (left) confirms: √n is the only scaling for which the variance neither blows up nor vanishes, and this is why a non-degenerate limit law can exist.</p>
+
+<h3>Law of Large Numbers</h3>
+<p>The Weak Law is a statement on probabilities, <em>P(|S<sub>n</sub>/n − μ| &gt; ε) → 0</em> for every ε &gt; 0. For these bounded variables it can be proved in one line: Chebyshev gives <em>P ≤ σ²/(nε²)</em> and Hoeffding gives the much sharper <em>2·exp(−2nε²/(b−a)²)</em>, with <em>b−a</em> = 1 (Bernoulli) or 2 (Rademacher). The simulation does not prove this; it illustrates it, and Figure 2 (middle) shows how far below Chebyshev's bound the real probability lies. The funnel in the trajectory plot for the average shows the same fact path by path (each walk settles on μ, a statement the Strong Law makes precise), but it is the probability of deviations, not the picture, that expresses convergence in probability. A sustained attack therefore has a success rate that is close to p, with an uncertainty that decreases as σ/√n and never reaches zero for finite n.</p>
+
+<h3>Central Limit Theorem</h3>
+<p>For i.i.d. increments with finite variance, <em>(S<sub>n</sub> − nμ)/(σ√n)</em> converges in distribution to N(0,1). In the Rademacher case μ = 0 and σ = 1, so this is exactly <em>S<sub>n</sub>/√n</em>. In the Bernoulli case <em>S<sub>n</sub>/√n</em> has mean <em>p√n</em>, which diverges, so it cannot converge to a standard normal: the centered and scaled version must be used (this is the "standardized" option). Convergence is only asymptotic: because <em>S<sub>n</sub></em> takes values on a lattice, the Kolmogorov distance from N(0,1) cannot be smaller than about half the largest probability jump, which is of order 1/√n (Berry-Esseen); it is larger for p far from ½ because of the skewness of Bernoulli sums. Histograms here use bins aligned with the lattice, so that the jagged look of an histogram is not an artefact of the bin width. The dependence of the plotted trajectories on k should also be read with care: at each fixed k the value <em>S<sub>k</sub>/√k</em> is approximately N(0,1), but along k the path wanders (the law of the iterated logarithm says it is not bounded); the "scaled walk" option shows the object that converges as a process, a Brownian motion, with a band of width proportional to √t.</p>
+
+<h3>Limits of this experiment</h3>
+<p>A simulation can only show behaviour for finite n and m and for the chosen p; for p very close to 0 or 1 the normal approximation needs a much larger n (a common rule of thumb is np(1−p) ≳ 10). The results change with the seed within the sampling error described in Section 3. The model assumes independent identical systems and attackers who do not learn: with dependence between systems or with attackers who adapt, the variances and the limit laws above would no longer hold.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let rand=Math.random;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---------- special functions ----------
+function erfc(x){const z=Math.abs(x),t=1/(1+.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(.37409196+t*(.09678418+t*(-.18628806+t*(.27886807+t*(-1.13520398+t*(1.48851587+t*(-.82215223+t*.17087277)))))))));return x>=0?r:2-r;}
+const Phi=z=>.5*erfc(-z/Math.SQRT2);
+const phi=z=>Math.exp(-.5*z*z)/Math.sqrt(2*Math.PI);
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0];const t=x+g+.5;for(let i=1;i<g+2;i++)a+=c[i]/(x+i);return .5*Math.log(2*Math.PI)+(x+.5)*Math.log(t)-t+Math.log(a);}
+// exact Kolmogorov distance between Bin(n,p) standardized and N(0,1)
+function exactKS(n,p){
+  const q=1-p,sd=Math.sqrt(n*p*q);let F=0,D=0;
+  for(let j=0;j<=n;j++){
+    const lp=lgamma(n+1)-lgamma(j+1)-lgamma(n-j+1)+j*Math.log(p)+(n-j)*Math.log(q),pm=Math.exp(lp),z=(j-n*p)/sd,G=Phi(z);
+    D=Math.max(D,Math.abs(F-G),Math.abs(F+pm-G));F+=pm;
+  }
+  return D;
+}
+function ksEmp(arr){const a=Float64Array.from(arr).sort(),m=a.length;let D=0;for(let i=0;i<m;i++){const F=Phi(a[i]);D=Math.max(D,Math.abs((i+1)/m-F),Math.abs(i/m-F));}return D;}
+const sampleVar=(a,f)=>{let mu=0;for(let i=0;i<a.length;i++)mu+=a[i]*f;mu/=a.length;let s=0;for(let i=0;i<a.length;i++){const d=a[i]*f-mu;s+=d*d;}return s/(a.length-1);};
+
+// ---------- parameters ----------
+function clampNote(msg){const e=$('clampnote');if(msg){e.style.display='block';e.textContent=msg;}else e.style.display='none';}
+function readParams(){
+  const notes=[],model=$('model').value;
+  const cl=(id,lo,hi,def,name)=>{let v=parseFloat($(id).value);if(!isFinite(v))v=def;const c=Math.min(hi,Math.max(lo,v));if(c!==v)notes.push(`${name} adjusted to ${c}`);$(id).value=c;return c;};
+  const p=model==='bernoulli'?cl('p',0.01,0.99,.5,'p'):parseFloat($('p').value)||.5;
+  const n=Math.round(cl('n',10,2000,500,'n')),m=Math.round(cl('m',10,5000,1000,'m')),ms=Math.round(cl('ms',200,5000,2000,'m_s'));
+  const eps=cl('eps',.01,1,.1,'ε');let seed=parseInt($('seed').value);if(!isFinite(seed)){seed=2026;$('seed').value=seed;}
+  clampNote(notes.length?'Input adjusted: '+notes.join('; ')+'.':'');
+  const P=model==='rademacher'?{mu:0,sig2:1,S0:n=>-n,step:2,range:2,pb:.5}:{mu:p,sig2:p*(1-p),S0:n=>0,step:1,range:1,pb:p};
+  P.sig=Math.sqrt(P.sig2);
+  return{model,p,n,m,ms,eps,seed,metric:$('metric').value,P};
+}
+function onModel(){$('p').disabled=$('model').value==='rademacher';runAll();}
+const MET={
+  total:{label:'Total score Sₙ',c:()=>0,s:()=>1,k0:0},
+  average:{label:'Average score Sₙ/n',c:()=>0,s:k=>k,k0:1},
+  normalized:{label:'Normalized score Sₙ/√n',c:()=>0,s:k=>Math.sqrt(k),k0:1},
+  standardized:{label:'Standardized (Sₙ − nμ)/(σ√n)',c:(k,n,P)=>k*P.mu,s:(k,n,P)=>P.sig*Math.sqrt(k),k0:1},
+  donsker:{label:'Scaled walk (S⌊nt⌋ − ⌊nt⌋μ)/(σ√n)',c:(k,n,P)=>k*P.mu,s:(k,n,P)=>P.sig*Math.sqrt(n),k0:0}
+};
+const yAt=(M,k,S,n,P)=>(S-M.c(k,n,P))/M.s(k,n,P);
+
+// ---------- chart helpers (plain SVG) ----------
+const COL={ink:'#3d4a3e',grid:'#e6dfd3',sage:'#728c75',light:'#a3b899',ocra:'#e8b86b',red:'#e06651',violet:'#8f729e',muted:'#7a7060'};
+const TX=(x,y,s,o={})=>`<text x="${(+x).toFixed(1)}" y="${(+y).toFixed(1)}" font-family="Georgia,serif" font-size="${o.size||12}" fill="${o.fill||COL.muted}" text-anchor="${o.anchor||'middle'}"${o.bold?' font-weight="bold"':''}${o.rot?` transform="rotate(${o.rot} ${x} ${y})"`:''}>${esc(s)}</text>`;
+function niceTicks(lo,hi,n){const span=hi-lo,raw=span/n,e=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/e,st=(f<=1?1:f<=2?2:f<=5?5:10)*e,out=[];for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9*st;v+=st)out.push(+v.toPrecision(12));return out;}
+const fmtT=v=>{const a=Math.abs(v);if(a===0)return '0';if(a>=1e5||a<1e-3)return v.toExponential(0);return String(+v.toPrecision(4));};
+const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const pow10=v=>'10'+String(Math.round(v)).split('').map(c=>SUP[c]).join('');
+function legend(items,x,y){let s='',cx=x;items.forEach(it=>{
+  if(it.line)s+=`<line x1="${cx}" x2="${cx+14}" y1="${y-3.5}" y2="${y-3.5}" stroke="${it.color}" stroke-width="2"${it.dash?' stroke-dasharray="4 3"':''}/>`;
+  else if(it.dot)s+=`<circle cx="${cx+5}" cy="${y-3.5}" r="3.2" fill="${it.color}"/>`;
+  else s+=`<rect x="${cx}" y="${y-9}" width="10" height="10" fill="${it.color}" opacity="${it.op||1}"/>`;
+  s+=TX(cx+17,y,it.name,{anchor:'start'});cx+=17+it.name.length*5.4+14;});return s;}
+let uid=0;
+function chart(o,fn){
+  const w=o.w||560,h=o.h||340,l=o.l||60,r=14,t=o.legend?(o.legend2?58:46):32,b=o.xl?50:34,pw=w-l-r,ph=h-t-b,id='cp'+(++uid);
+  const X=x=>l+(x-o.xmin)/(o.xmax-o.xmin)*pw,Y=y=>t+ph-(y-o.ymin)/(o.ymax-o.ymin)*ph;
+  const xt=o.xticks||niceTicks(o.xmin,o.xmax,6),yt=o.yticks||niceTicks(o.ymin,o.ymax,5),xf=o.xfmt||fmtT,yf=o.yfmt||fmtT;
+  let s=TX(w/2,16,o.title,{size:13.5,fill:COL.ink,bold:true});
+  if(o.legend)s+=legend(o.legend,l,36);
+  if(o.legend2)s+=legend(o.legend2,l,52);
+  yt.forEach(v=>{const y=Y(v);if(y>=t-1&&y<=t+ph+1)s+=`<line x1="${l}" x2="${w-r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${COL.grid}"/>`+TX(l-6,y+3.5,yf(v),{anchor:'end'});});
+  xt.forEach(v=>{const x=X(v);if(x>=l-1&&x<=w-r+1)s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${t}" y2="${t+ph}" stroke="${COL.grid}"/>`+TX(x,t+ph+15,xf(v));});
+  s+=`<rect x="${l}" y="${t}" width="${pw}" height="${ph}" fill="none" stroke="${COL.muted}"/>`;
+  s+=`<clipPath id="${id}"><rect x="${l}" y="${t}" width="${pw}" height="${ph}"/></clipPath><g clip-path="url(#${id})">${fn(X,Y)}</g>`;
+  if(o.xl)s+=TX(l+pw/2,h-7,o.xl);
+  if(o.yl)s+=TX(13,t+ph/2,o.yl,{rot:-90});
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(o.title)}">${s}</svg>`;
+}
+const poly=(pts,X,Y,col,wd,extra='')=>`<polyline fill="none" stroke="${col}" stroke-width="${wd}" ${extra} points="${pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`;
+
+// ---------- section 1: main simulation ----------
+let lastMain=null;
+function runMain(){
+  const pr=readParams(),{model,p,n,m,seed,metric,P,eps}=pr,M=MET[metric];
+  rand=mulberry32(seed);
+  const nd=Math.min(m,150),finals=new Float64Array(m),paths=[];
+  const bern=model==='bernoulli';
+  for(let i=0;i<m;i++){
+    let S=0;const path=i<nd?new Int32Array(n+1):null;
+    for(let k=1;k<=n;k++){S+=bern?(rand()<p?1:0):(rand()<.5?1:-1);if(path)path[k]=S;}
+    finals[i]=S;if(path)paths.push(path);
+  }
+  // --- trajectories
+  const stride=Math.max(1,Math.floor(n/300)),ks=[];
+  for(let k=M.k0;k<=n;k+=stride)ks.push(k);if(ks[ks.length-1]!==n)ks.push(n);
+  const mean=k=>(k*P.mu-M.c(k,n,P))/M.s(k,n,P),sd=k=>P.sig*Math.sqrt(k)/M.s(k,n,P);
+  let lo=Infinity,hi=-Infinity;
+  const lines=paths.map(path=>ks.map(k=>{const y=yAt(M,k,path[k],n,P);if(y<lo)lo=y;if(y>hi)hi=y;return[k,y];}));
+  ks.forEach(k=>{lo=Math.min(lo,mean(k)-2*sd(k));hi=Math.max(hi,mean(k)+2*sd(k));});
+  if(hi-lo<1e-9){hi+=1;lo-=1;}
+  const pad=.05*(hi-lo);lo-=pad;hi+=pad;
+  const band=sgn=>ks.map(k=>[k,mean(k)+sgn*2*sd(k)]);
+  const xl=metric==='donsker'?'step k (t = k/n)':'step k (systems attacked so far)';
+  $('figTraj').innerHTML=chart({title:'Attacker trajectories: '+M.label,xmin:0,xmax:n,ymin:lo,ymax:hi,xl,yl:M.label,
+    legend:[{name:`${paths.length} of ${m} attackers`,color:COL.light,line:true},{name:'theoretical mean',color:COL.red,line:true,dash:true},{name:'mean ± 2 sd',color:COL.ink,line:true,dash:true}]},
+    (X,Y)=>lines.map(pts=>poly(pts,X,Y,'rgba(114,140,117,.35)',.9)).join('')+poly(ks.map(k=>[k,mean(k)]),X,Y,COL.red,2,'stroke-dasharray="6 4"')+poly(band(1),X,Y,COL.ink,1.2,'stroke-dasharray="2 3"')+poly(band(-1),X,Y,COL.ink,1.2,'stroke-dasharray="2 3"'));
+  // --- histogram (bins aligned with the lattice of possible values)
+  const cn=M.c(n,n,P),sn=M.s(n,n,P),y0=(P.S0(n)-cn)/sn,d=P.step/sn,mu_n=mean(n),sd_n=sd(n);
+  const cnt=new Int32Array(n+1);
+  for(let i=0;i<m;i++){const j=model==='rademacher'?(finals[i]+n)/2:finals[i];cnt[j]++;}
+  let jLo=Math.max(0,Math.floor((mu_n-4.5*sd_n-y0)/d)),jHi=Math.min(n,Math.ceil((mu_n+4.5*sd_n-y0)/d));
+  if(jHi<jLo)jHi=jLo;
+  const W=jHi-jLo+1,kk=Math.max(1,Math.ceil(W/40)),nb=Math.ceil(W/kk),bars=[];let dmax=0,inside=0;
+  for(let b=0;b<nb;b++){let c=0;for(let j=jLo+b*kk;j<Math.min(jLo+(b+1)*kk,jHi+1);j++)c+=cnt[j];inside+=c;
+    const x1=y0+d*(jLo+b*kk-.5),x2=y0+d*(jLo+(b+1)*kk-.5),dens=c/(m*(x2-x1));bars.push([x1,x2,dens]);dmax=Math.max(dmax,dens);}
+  const xmin=bars[0][0],xmax=bars[bars.length-1][1],pk=1/(sd_n*Math.sqrt(2*Math.PI)),ymax=1.12*Math.max(dmax,pk);
+  const pdf=x=>phi((x-mu_n)/sd_n)/sd_n,curve=[];for(let i=0;i<=240;i++){const x=xmin+(xmax-xmin)*i/240;curve.push([x,pdf(x)]);}
+  $('figHist').innerHTML=chart({title:`Distribution of the final score (n = ${n})`,xmin,xmax,ymin:0,ymax,xl:M.label+' at step n',yl:'density',
+    legend:[{name:'simulated density',color:COL.light,op:.8},{name:`N(${fmtT(+mu_n.toPrecision(4))}, ${fmtT(+(sd_n*sd_n).toPrecision(4))})`,color:COL.red,line:true}]},
+    (X,Y)=>bars.map(b=>`<rect x="${X(b[0]).toFixed(1)}" y="${Y(b[2]).toFixed(1)}" width="${Math.max(0,X(b[1])-X(b[0])-.6).toFixed(1)}" height="${Math.max(0,Y(0)-Y(b[2])).toFixed(1)}" fill="${COL.light}" fill-opacity=".8" stroke="${COL.sage}" stroke-width=".6"/>`).join('')+poly(curve,X,Y,COL.red,2.2));
+  $('capMain').innerHTML=`Figure 1. Left: ${paths.length} of the ${m} walks and their theoretical mean and ±2 standard-deviation envelope. Right: histogram of all ${m} final values (bins aligned with the lattice of possible values, ${kk===1?'one value per bin':kk+' values per bin'}) against the Gaussian density with the theoretical mean and variance of this quantity; ${bars.length?((100*inside/m).toFixed(1)):0}% of the attackers fall in the plotted range. Model: ${model==='rademacher'?'Rademacher':'Bernoulli, p = '+p}, seed ${seed}.`;
+  // --- statistics table at the current n
+  const S=Array.from(finals),ndev=S.filter(s=>Math.abs(s/n-P.mu)>eps).length;
+  const mean0=S.reduce((a,b)=>a+b,0)/m;
+  const rows=[['Sₙ',1,n*P.mu,n*P.sig2],['Sₙ/n',1/n,P.mu,P.sig2/n],['Sₙ/√n',1/Math.sqrt(n),P.mu*Math.sqrt(n),P.sig2]];
+  let tb=`<table><tr><th>quantity (n = ${n}, m = ${m})</th><th>empirical mean</th><th class="th">theory</th><th>empirical variance</th><th class="th">theory</th></tr>`;
+  rows.forEach(([nm,f,tm,tv])=>{tb+=`<tr><td>${nm}</td><td>${fmtT(+(mean0*f).toPrecision(4))}</td><td class="th">${fmtT(+tm.toPrecision(4))}</td><td>${fmtT(+sampleVar(S,f).toPrecision(4))}</td><td class="th">${fmtT(+tv.toPrecision(4))}</td></tr>`;});
+  const z=S.map(s=>(s-n*P.mu)/(P.sig*Math.sqrt(n)));
+  tb+=`</table><p class="small">Empirical P(|Sₙ/n − μ| &gt; ε = ${eps}) = ${(100*ndev/m).toFixed(1)}%, Chebyshev bound ${(100*Math.min(1,P.sig2/(n*eps*eps))).toFixed(1)}%, Hoeffding bound ${(100*Math.min(1,2*Math.exp(-2*n*eps*eps/(P.range*P.range)))).toFixed(1)}%. Kolmogorov distance of the standardized score from N(0,1): ${ksEmp(z).toFixed(4)} (sampling noise of order ${(1.36/Math.sqrt(m)).toFixed(3)}).</p>`;
+  $('statsTable').innerHTML=tb;
+  lastMain=pr;
+}
+
+// ---------- section 2: behaviour as n grows ----------
+const NS=[10,25,50,100,250,500,1000,2000];
+function scaleStudy(){
+  const pr=readParams(),{model,p,ms,eps,seed,P}=pr,bern=model==='bernoulli';
+  rand=mulberry32(seed+1);
+  const store=NS.map(()=>new Float64Array(ms)),NMAX=NS[NS.length-1];
+  for(let i=0;i<ms;i++){let S=0,ptr=0;for(let k=1;k<=NMAX;k++){S+=bern?(rand()<p?1:0):(rand()<.5?1:-1);if(k===NS[ptr]){store[ptr][i]=S;ptr++;}}}
+  const rows=NS.map((n,q)=>{
+    const S=store[q],z=Array.from(S,s=>(s-n*P.mu)/(P.sig*Math.sqrt(n)));let dev=0;for(const s of S)if(Math.abs(s/n-P.mu)>eps)dev++;
+    return{n,vS:sampleVar(S,1),vA:sampleVar(S,1/n),vN:sampleVar(S,1/Math.sqrt(n)),tS:n*P.sig2,tA:P.sig2/n,tN:P.sig2,
+      pd:dev/ms,cheb:Math.min(1,P.sig2/(n*eps*eps)),hoef:Math.min(1,2*Math.exp(-2*n*eps*eps/(P.range*P.range))),ksE:ksEmp(z),ksX:exactKS(n,P.pb)};});
+  const lx=rows.map(r=>Math.log10(r.n)),L=Math.log10,xt=lx,xf=v=>String(Math.round(Math.pow(10,v)));
+  const ser=(f)=>rows.map(r=>[L(r.n),f(r)]);
+  const ymaxV=Math.ceil(Math.max(L(rows[rows.length-1].tS),L(rows[rows.length-1].vS))),yminV=Math.floor(Math.min(L(rows[rows.length-1].tA),L(rows[rows.length-1].vA)));
+  const dots=(pts,X,Y,col)=>pts.map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.4" fill="${col}" stroke="#FFFDF9" stroke-width="1"/>`).join('');
+  $('figVar').innerHTML=chart({w:420,h:330,title:'Variance of the three quantities vs. n',xmin:lx[0]-.1,xmax:lx[lx.length-1]+.1,ymin:yminV-.2,ymax:ymaxV+.2,xticks:xt,xfmt:xf,yticks:Array.from({length:ymaxV-yminV+1},(_,i)=>yminV+i),yfmt:pow10,xl:'n (systems)',yl:'variance',
+    legend:[{name:'Sₙ',color:COL.red,dot:true},{name:'Sₙ/n',color:COL.ocra,dot:true},{name:'Sₙ/√n',color:COL.sage,dot:true},{name:'dashed: theory',color:COL.muted,line:true,dash:true}]},
+    (X,Y)=>[[r=>r.tS,r=>r.vS,COL.red],[r=>r.tA,r=>r.vA,COL.ocra],[r=>r.tN,r=>r.vN,COL.sage]].map(([t,e,c])=>poly(ser(r=>L(t(r))),X,Y,c,1.6,'stroke-dasharray="5 4"')+dots(ser(r=>L(e(r))),X,Y,c)).join(''));
+  $('figLLN').innerHTML=chart({w:420,h:330,title:`LLN: P(|Sₙ/n − μ| > ${eps}) vs. n`,xmin:lx[0]-.1,xmax:lx[lx.length-1]+.1,ymin:0,ymax:1.02,xticks:xt,xfmt:xf,yticks:[0,.2,.4,.6,.8,1],yfmt:v=>Math.round(100*v)+'%',xl:'n (systems)',yl:'probability',
+    legend:[{name:'simulation',color:COL.violet,dot:true},{name:'Chebyshev',color:COL.red,line:true,dash:true},{name:'Hoeffding',color:COL.sage,line:true,dash:true}]},
+    (X,Y)=>poly(ser(r=>r.cheb),X,Y,COL.red,1.8,'stroke-dasharray="5 4"')+poly(ser(r=>r.hoef),X,Y,COL.sage,1.8,'stroke-dasharray="5 4"')+poly(ser(r=>r.pd),X,Y,COL.violet,1.6)+dots(ser(r=>r.pd),X,Y,COL.violet));
+  const floor=1.36/Math.sqrt(ms),vals=rows.flatMap(r=>[r.ksE,r.ksX]).concat([floor]),ky0=Math.floor(L(Math.min(...vals))),ky1=Math.ceil(L(Math.max(...vals)));
+  $('figKS').innerHTML=chart({w:420,h:330,title:'CLT: Kolmogorov distance from N(0,1) vs. n',xmin:lx[0]-.1,xmax:lx[lx.length-1]+.1,ymin:ky0-.1,ymax:ky1+.1,xticks:xt,xfmt:xf,yticks:Array.from({length:ky1-ky0+1},(_,i)=>ky0+i),yfmt:pow10,xl:'n (systems)',yl:'sup |F − Φ|',
+    legend:[{name:'exact (binomial law)',color:COL.sage,line:true},{name:'simulation',color:COL.violet,dot:true},{name:`noise level 1.36/√m_s`,color:COL.red,line:true,dash:true}]},
+    (X,Y)=>poly(ser(r=>L(r.ksX)),X,Y,COL.sage,2)+poly(ser(r=>L(r.ksE)),X,Y,COL.violet,1,'opacity=".5"')+dots(ser(r=>L(r.ksE)),X,Y,COL.violet)+`<line x1="0" x2="2000" y1="${Y(L(floor)).toFixed(1)}" y2="${Y(L(floor)).toFixed(1)}" stroke="${COL.red}" stroke-dasharray="5 4" stroke-width="1.6"/>`);
+  const g=v=>fmtT(+v.toPrecision(3));
+  let tb='<table><tr><th>n</th><th>Var Sₙ</th><th class="th">nσ²</th><th>Var Sₙ/n</th><th class="th">σ²/n</th><th>Var Sₙ/√n</th><th class="th">σ²</th><th>P̂ dev.</th><th class="th">Chebyshev</th><th class="th">Hoeffding</th><th>KS (sim.)</th><th class="th">KS (exact)</th></tr>';
+  rows.forEach(r=>{tb+=`<tr><td>${r.n}</td><td>${g(r.vS)}</td><td class="th">${g(r.tS)}</td><td>${g(r.vA)}</td><td class="th">${g(r.tA)}</td><td>${g(r.vN)}</td><td class="th">${g(r.tN)}</td><td>${(100*r.pd).toFixed(1)}%</td><td class="th">${(100*r.cheb).toFixed(1)}%</td><td class="th">${(100*r.hoef).toFixed(1)}%</td><td>${r.ksE.toFixed(4)}</td><td class="th">${r.ksX.toFixed(4)}</td></tr>`;});
+  $('scaleTable').innerHTML=tb+'</table>';
+  const vn=rows.map(r=>r.vN),first=rows[0],lastR=rows[rows.length-1];
+  $('scaleSummary').innerHTML=`${model==='rademacher'?'Rademacher':'Bernoulli (p = '+p+')'}, ${ms} attackers, seed ${seed}. Var(Sₙ/√n) stays between ${g(Math.min(...vn))} and ${g(Math.max(...vn))} for every n (theory: σ² = ${g(P.sig2)}), whereas Var(Sₙ) goes from ${g(first.vS)} to ${g(lastR.vS)} and Var(Sₙ/n) from ${g(first.vA)} to ${g(lastR.vA)}. The probability of a deviation larger than ε = ${eps} falls from ${(100*first.pd).toFixed(1)}% at n = ${first.n} to ${(100*lastR.pd).toFixed(1)}% at n = ${lastR.n}, ${rows.every(r=>r.pd<=Math.min(r.cheb,r.hoef)+1e-9)?'always below both bounds':'within both bounds up to sampling noise'}. The exact Kolmogorov distance from N(0,1) falls from ${first.ksX.toFixed(3)} to ${lastR.ksX.toFixed(4)}, roughly as 1/√n; the simulated values stop following it once they reach the noise level ${floor.toFixed(3)}.`;
+}
+
+// ---------- section 3: Monte Carlo error vs m ----------
+function mcStudy(){
+  const pr=readParams(),{model,p,seed,P}=pr,bern=model==='bernoulli',n=100,reps=40,ml=[50,200,1000,5000],rs=Math.sqrt(n);
+  rand=mulberry32(seed+2);
+  const res=ml.map(m=>{const est=[];
+    for(let r=0;r<reps;r++){let s1=0,s2=0;for(let i=0;i<m;i++){let S=0;for(let k=0;k<n;k++)S+=bern?(rand()<p?1:0):(rand()<.5?1:-1);const y=S/rs;s1+=y;s2+=y*y;}
+      est.push((s2-s1*s1/m)/(m-1));}
+    const mean=est.reduce((a,b)=>a+b,0)/reps,sd=Math.sqrt(est.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(reps-1));
+    return{m,mean,sd,th:P.sig2*Math.sqrt(2/(m-1))};});
+  const L=Math.log10,lx=res.map(r=>L(r.m)),all=res.flatMap(r=>[L(r.sd),L(r.th)]),y0=Math.floor(Math.min(...all)),y1=Math.ceil(Math.max(...all));
+  $('figMC').innerHTML=chart({w:420,h:330,title:'Monte Carlo error of the variance estimate',xmin:lx[0]-.1,xmax:lx[lx.length-1]+.1,ymin:y0-.1,ymax:y1+.1,xticks:lx,xfmt:v=>String(Math.round(Math.pow(10,v))),yticks:Array.from({length:y1-y0+1},(_,i)=>y0+i),yfmt:pow10,xl:'attackers m',yl:'std of the estimate (40 repetitions)',
+    legend:[{name:'simulation',color:COL.violet,dot:true},{name:'σ²√(2/(m−1))',color:COL.red,line:true,dash:true}]},
+    (X,Y)=>poly(res.map(r=>[L(r.m),L(r.th)]),X,Y,COL.red,1.8,'stroke-dasharray="5 4"')+poly(res.map(r=>[L(r.m),L(r.sd)]),X,Y,COL.violet,1.4)+res.map(r=>`<circle cx="${X(L(r.m)).toFixed(1)}" cy="${Y(L(r.sd)).toFixed(1)}" r="3.6" fill="${COL.violet}" stroke="#FFFDF9" stroke-width="1"/>`).join(''));
+  const g=v=>fmtT(+v.toPrecision(3));
+  $('mcTable').innerHTML=`<table><tr><th>m</th><th>mean of the estimates</th><th class="th">true value σ²</th><th>std of the estimates</th><th class="th">σ²√(2/(m−1))</th></tr>`+res.map(r=>`<tr><td>${r.m}</td><td>${g(r.mean)}</td><td class="th">${g(P.sig2)}</td><td>${g(r.sd)}</td><td class="th">${g(r.th)}</td></tr>`).join('')+`</table><p class="small">n = 100, ${reps} repetitions per m, seed ${seed}. Model: ${model==='rademacher'?'Rademacher':'Bernoulli, p = '+p}. The estimates are centered on the true variance for every m: a small number of attackers adds noise but no bias.</p>`;
+}
+
+function runAll(){runMain();scaleStudy();mcStudy();}
+$('p').disabled=$('model').value==='rademacher';
+runAll();
+</script>
+</body>
+</html>
