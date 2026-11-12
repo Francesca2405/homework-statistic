@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homework 6 - Riemann, Lebesgue & Normal CDF</title>
+    <style>
+        body {
+            font-family: "Georgia", "Palatino Linotype", serif;
+            line-height: 1.6;
+            color: #3d4a3e;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 30px;
+            background-color: #FAF6F0; 
+        }
+        .nav-btn {
+            text-decoration: none; color: #4a5c4d; font-weight: bold;
+            border: 2px solid #a3b899; padding: 8px 18px; border-radius: 12px; transition: 0.3s;
+            background: #FFFDF9; display: inline-block; margin-bottom: 20px;
+        }
+        .nav-btn:hover { background-color: #728c75; color: #FFFDF9; }
+        
+        h1 { text-align: center; color: #4a5c4d; margin-bottom: 5px; font-weight: normal; }
+        .subtitle { text-align: center; color: #728c75; font-style: italic; margin-bottom: 40px; }
+        h2 { color: #4a5c4d; border-bottom: 2px solid #dcd4c4; padding-bottom: 5px; margin-top: 50px; font-weight: normal; }
+        
+        .box { background: #FFFDF9; padding: 24px; border: 1px solid #e0dacf; border-radius: 16px; margin-top: 20px; box-shadow: 0 6px 15px rgba(114,140,117,0.04); }
+        
+        .report-section { background: #EDF3EC; padding: 30px; border-radius: 16px; border: 1px solid #d2ded0; margin-top: 25px; }
+        .report-section h3 { color: #4a5c4d; margin-top: 0; border-bottom: 1px solid #c0ccbe; padding-bottom: 8px; }
+        .report-section h4 { color: #5c705e; margin-bottom: 5px; margin-top: 20px;}
+        .report-section p { margin-top: 5px; text-align: justify; }
+        .report-section ul { margin-top: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; overflow-x: auto; display: block; white-space: nowrap; }
+        th, td { border: 1px solid #d2ded0; padding: 8px 12px; text-align: right; }
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #dfe9dc; color: #4a5c4d; }
+        
+        .math-block { background: #FFFDF9; padding: 15px; border: 1px dashed #c0ccbe; border-radius: 12px; text-align: center; font-family: "Courier New", monospace; font-size: 1.1em; margin: 15px 0; color: #4a5c4d; font-weight: bold;}
+        
+        .figrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-top: 20px; }
+        .fig { background: #FFFDF9; border: 1px solid #e0dacf; border-radius: 14px; padding: 15px; }
+        .fig svg { width: 100%; height: auto; display: block; }
+        
+        button.action-btn { width: 100%; padding: 14px; font-size: 16px; background: #728c75; color: #FFFDF9; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.2s;}
+        button.action-btn:hover { background: #4a5c4d; }
+        .highlight { color: #e06651; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="nav-btn">← Back to Home</a>
+
+    <h1>Homework 6: Advanced Integration</h1>
+    <div class="subtitle">Riemann vs Lebesgue Methodologies & Numerical Normal CDF</div>
+
+    <!-- ESERCIZIO 1 -->
+    <h2>1. Riemann and Lebesgue Integration Methods</h2>
+    
+    <div class="report-section">
+        <h3>Theoretical Discussion & Methodological Comparison</h3>
+        
+        <h4>1. Convergence and Agreement on Standard Functions</h4>
+        <p>The <strong>Riemann Integral</strong> approaches the problem by partitioning the domain (the x-axis) into infinitesimally small subintervals, computing the area as a sum of vertical slices (e.g., using the Midpoint rule). The <strong>Lebesgue Integral</strong>, conversely, partitions the range (the y-axis) into subsets and evaluates the exact analytical measure of the domain preimages where the function falls into those subsets. This is mathematically expressed via the "layer-cake" formula: <code>∫f = ∫ μ{x: f(x) &gt; t} dt</code>.<br>
+        For standard, Riemann-integrable functions (such as <em>x²</em>, <em>sin(x)</em>, or piecewise step functions), <strong>both approaches converge securely to the exact same theoretical value</strong>. Computationally, however, the numerical Riemann sum is highly efficient, resolving in <em>O(N)</em> time. Implementing a "genuine" numerical Lebesgue integral requires analytical knowledge of the preimages (or root-finding algorithms like Binary Search for functions like <em>sinc(x)</em>), making it computationally heavier but theoretically more robust.</p>
+        
+        <h4>2. Pathological Behavior: Where the Methods Diverge</h4>
+        <p>The philosophical divergence between the two integrals becomes evident when evaluating pathological functions characterized by dense discontinuities.</p>
+        <ul>
+            <li><strong>The Dirichlet Function (1 on Rationals, 0 on Irrationals):</strong> This is the classic example of a Riemann-non-integrable function. Its upper and lower Darboux sums are perpetually stuck at 1 and 0, regardless of the partition size. However, the Lebesgue approach resolves this trivially: since the set of rational numbers is countably infinite, its Lebesgue measure is precisely 0. Thus, the integral evaluates exactly to 0.</li>
+            <li><strong>Thomae's "Popcorn" Function (1/q for x = p/q):</strong> Theoretically, Thomae's function is Riemann integrable and evaluates to 0, because its discontinuities are countable and have measure zero. However, <em>numerical</em> Riemann integration fails spectacularly if implemented naively. Because every floating-point number in a computer is rational, a naive Riemann sum evaluating <em>f(i/N)</em> will artificially hit rational high-density fractions, producing an artifact value strictly greater than 0. To properly emulate its convergence, our algorithm computes <em>f = gcd(i,N)/N</em>, forcing the sum to converge to 0 at a slow rate of <em>τ(N)/N</em>. The Lebesgue approach, relying purely on the analytical measure of the level sets (which is 0 for any <em>t &gt; 0</em>), bypasses these floating-point artifacts entirely, returning 0 instantly.</li>
+        </ul>
+    </div>
+
+    <div class="box">
+        <button class="action-btn" onclick="runEx1()">Execute Part 1: Function Integration Benchmarks</button>
+        <div id="ex1-table-container"></div>
+        <div class="figrow" id="figrow-ex1" style="display:none;">
+            <div class="fig" id="fig-lebesgue-riemann"></div>
+        </div>
+    </div>
+
+    <!-- ESERCIZIO 2 -->
+    <h2>2. Numerical Computation of the Normal CDF</h2>
+    
+    <div class="report-section">
+        <h3>Liouville's Theorem and The Error Function (erf)</h3>
+        <p>To compute the Cumulative Distribution Function (CDF) of the standard normal distribution, denoted as Φ(z), we must evaluate the integral of the Gaussian probability density function:</p>
+        <div class="math-block">Φ(z) = ∫<sub>-∞</sub><sup>z</sup> (1 / √(2π)) e<sup>-t²/2</sup> dt</div>
+        
+        <h4>Mathematical Impossibility (Liouville's Theorem)</h4>
+        <p>Why can't we just find a simple algebraic formula for this integral? <strong>Liouville's Theorem</strong> states that if an integral of the form <code>∫ f(x)e^{g(x)} dx</code> (where <em>f</em> and <em>g</em> are rational functions) has an elementary antiderivative, that antiderivative must be of the form <code>R(x)e^{g(x)}</code>, where <em>R</em> is a rational function. <br>
+        By differentiating this supposed antiderivative, we get: <code>R'(x) + g'(x)R(x) = f(x)</code>. Substituting the Gaussian terms (where g(x) = -x²/2 and f(x) = 1), the equation simplifies to:</p>
+        <div class="math-block">R'(x) - x R(x) = 1</div>
+        <p>This differential equation has no solution in the realm of rational functions. If <em>R(x)</em> were a polynomial of degree <em>n</em>, the left side would have a highest degree of <em>n+1</em>, which can never equal a constant (degree 0). Furthermore, if <em>R(x)</em> had a pole (a denominator), the derivative <em>R'(x)</em> would increase the order of that pole, making it impossible for the terms to cancel out and yield 1. Therefore, no elementary antiderivative exists.</p>
+
+        <h4>The Role of the Error Function</h4>
+        <p>To provide an exact analytical representation, mathematicians defined the <strong>Error Function (erf)</strong>, establishing the exact relationship: <code>Φ(z) = ½[1 + erf(z/√2)]</code>. However, this is just an analytical label. Because the underlying integral remains non-elementary, any practical software implementation evaluating <code>erf()</code> must still rely on numerical approximation techniques (like series expansions or rational approximations) under the hood.</p>
+        
+        <h3>Analysis of Numerical Approaches & Tail Accuracy</h3>
+        <ul>
+            <li><strong>Numerical Integration (Simpson's 1/3 Rule):</strong> Splitting the area into parabolic arcs yields a stable, highly accurate result with an error convergence of <em>O(h⁴)</em>. A crucial implementation detail concerns the <strong>tails</strong>: calculating deep negative tails (e.g., z = -8) by subtracting the integral from 0.5 (i.e., <code>0.5 - ∫</code>) destroys relative accuracy, introducing errors up to 16%. To achieve 15-digit precision on the tails, the integration must be executed directly from a deep lower bound (e.g., -38) up to <em>z</em>.</li>
+            <li><strong>Alternating Taylor Series:</strong> Expanding the exponential term yields an alternating series. While incredibly fast for small values of |z|, it suffers from <strong>catastrophic cancellation</strong> at larger values (e.g., |z| &ge; 6). The intermediate terms become astronomically large before the factorial denominators can pull them down; adding and subtracting these huge floats in 64-bit precision destroys all significant digits, leading to massive truncation errors or even mathematically impossible negative probabilities.</li>
+            <li><strong>Positive-Term Series & Asymptotic Tails:</strong> To bypass cancellation near the mean, we can rewrite the expansion into a series containing exclusively positive terms: <code>Φ(z) = 0.5 + (1/√(2π))e^{-z²/2} Σ z^{2k+1}/(1·3·5...(2k+1))</code>. However, for extremely deep negative tails (z &le; -4), converting this back to CDF still involves a <code>0.5 - 0.5</code> operation that loses accuracy. The ultimate solution for deep tails is employing the <strong>Asymptotic Expansion</strong> (a continued fraction approach: <code>1 - 1/z² + 3/z⁴...</code>), ensuring perfect relative accuracy without floating-point cancellation.</li>
+        </ul>
+    </div>
+
+    <div class="box">
+        <button class="action-btn" onclick="runEx2()" style="background: #e8b86b; color: #3d4a3e;">Execute Part 2: Normal CDF Analysis</button>
+        <div id="ex2-table-container"></div>
+        <div class="figrow" id="figrow-ex2" style="display:none;">
+            <div class="fig" id="fig-simpson"></div>
+            <div class="fig" id="fig-taylor"></div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- UTILITIES ---
+        const g = (v, d = 10) => (v === null || isNaN(v)) ? "-" : Number(v).toPrecision(d);
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        
+        // Micro-benchmarking tool (runs multiple cycles to get true ms averages)
+        function timeIt(fn, cycles = 100) {
+            let t0 = performance.now();
+            for(let i = 0; i < cycles; i++) fn();
+            return ((performance.now() - t0) / cycles).toFixed(4);
+        }
+
+        // --- EXERCISE 1: Riemann & Genuine Lebesgue (Layer-Cake) ---
+        const ex1_funcs = [
+            { name: "x²", domain: "[0, 1]", trueVal: 1/3, 
+              riemann: N => { let s=0, dx=1/N; for(let i=0; i<N; i++) { let x=(i+0.5)*dx; s+= x*x; } return s*dx; },
+              lebesgue: M => { let s=0, dt=1/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; s+= (1 - Math.sqrt(t)); } return s*dt; } 
+            },
+            { name: "sin(x)", domain: "[0, π]", trueVal: 2, 
+              riemann: N => { let s=0, dx=Math.PI/N; for(let i=0; i<N; i++) s+= Math.sin((i+0.5)*dx); return s*dx; },
+              lebesgue: M => { let s=0, dt=1/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; s+= (Math.PI - 2*Math.asin(t)); } return s*dt; }
+            },
+            { name: "Step (1 if x < 0.5 else 3)", domain: "[0, 1]", trueVal: 2, 
+              riemann: N => { let s=0, dx=1/N; for(let i=0; i<N; i++) s+= ((i+0.5)*dx < 0.5 ? 1 : 3); return s*dx; },
+              lebesgue: M => { let s=0, dt=3/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; if(t<1) s+=1; else if(t<3) s+=0.5; } return s*dt; }
+            },
+            { name: "|x - 0.5|", domain: "[0, 1]", trueVal: 0.25, 
+              riemann: N => { let s=0, dx=1/N; for(let i=0; i<N; i++) s+= Math.abs((i+0.5)*dx - 0.5); return s*dx; },
+              lebesgue: M => { let s=0, dt=0.5/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; s+= (1 - 2*t); } return s*dt; }
+            },
+            { name: "1 / √x", domain: "(0, 1]", trueVal: 2, 
+              riemann: N => { let s=0, dx=1/N; for(let i=0; i<N; i++) s+= 1/Math.sqrt((i+0.5)*dx); return s*dx; },
+              // Unbounded function: truncate Lebesgue y-axis at M*100 to catch tails accurately
+              lebesgue: M => { let s=0, ymax=10000, dt=ymax/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; s+= (t<=1 ? 1 : 1/(t*t)); } return s*dt; }
+            },
+            { name: "Indicator (1 if x < 0.5 else 0)", domain: "[0, 1]", trueVal: 0.5, 
+              riemann: N => { let s=0, dx=1/N; for(let i=0; i<N; i++) s+= ((i+0.5)*dx < 0.5 ? 1 : 0); return s*dx; },
+              lebesgue: M => { let s=0, dt=1/M; for(let i=0; i<M; i++) { let t=(i+0.5)*dt; if(t<1) s+=0.5; } return s*dt; }
+            },
+            { name: "sin(x) / x", domain: "(0, π]", trueVal: 1.851937051982466, 
+              riemann: N => { let s=0, dx=Math.PI/N; for(let i=0; i<N; i++) { let x=(i+0.5)*dx; s+= Math.sin(x)/x; } return s*dx; },
+              // sinc is monotonically decreasing on (0, pi]. Finding the measure of f>t requires inverting sinc via Binary Search
+              lebesgue: M => { 
+                  let s=0, dt=1/M; 
+                  for(let i=0; i<M; i++) { 
+                      let t=(i+0.5)*dt, low=0, high=Math.PI, mid;
+                      for(let k=0; k<15; k++) { 
+                          mid = (low+high)/2;
+                          if(Math.sin(mid)/mid > t) low = mid; else high = mid;
+                      }
+                      s += mid; 
+                  } return s*dt; 
+              }
+            },
+            { name: "Dirichlet (Q:1, Ir:0)", domain: "[0, 1]", trueVal: 0, 
+              riemann: N => "Undefined (Upper=1, Lower=0)",
+              lebesgue: M => 0 // Analytical measure of Rationals is 0
+            },
+            { name: "Thomae (Popcorn)", domain: "[0, 1]", trueVal: 0, 
+              riemann: N => { let s=0; for(let i=1; i<=N; i++) s += gcd(i, N)/N; return s/N; },
+              lebesgue: M => 0 // Analytical measure of f>t is 0
+            }
+        ];
+
+        function runEx1() {
+            const N = 10000;
+            let html = `<table><tr><th>Function</th><th>Domain</th><th>True Value</th><th>Riemann Appx (N=10k)</th><th>Riemann Err</th><th>Time (ms)</th><th>Lebesgue Appx (M=10k)</th><th>Lebesgue Err</th><th>Time (ms)</th></tr>`;
+            
+            ex1_funcs.forEach(f => {
+                let rVal, rErr = "-", rTime = "-";
+                if(f.name !== "Dirichlet (Q:1, Ir:0)") {
+                    rVal = f.riemann(N);
+                    rErr = Math.abs(rVal - f.trueVal).toExponential(2);
+                    rTime = timeIt(() => f.riemann(N), 50);
+                } else {
+                    rVal = f.riemann(N);
+                }
+
+                let lVal = f.lebesgue(N);
+                let lErr = Math.abs(lVal - f.trueVal).toExponential(2);
+                let lTime = timeIt(() => f.lebesgue(N), 50);
+
+                html += `<tr><td><b>${f.name}</b></td><td>${f.domain}</td><td>${g(f.trueVal, 5)}</td><td>${typeof rVal === 'number' ? g(rVal, 6) : rVal}</td><td>${rErr}</td><td>${rTime}</td><td>${g(lVal, 6)}</td><td>${lErr}</td><td>${lTime}</td></tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('ex1-table-container').innerHTML = html;
+
+            // Generate Ex1 Log-Log Chart (Convergence for x^2)
+            let f = ex1_funcs[0]; // x^2
+            let N_vals = [10, 50, 100, 500, 1000, 5000, 10000];
+            let rPts = N_vals.map(n => [n, Math.max(1e-16, Math.abs(f.riemann(n) - f.trueVal))]);
+            let lPts = N_vals.map(n => [n, Math.max(1e-16, Math.abs(f.lebesgue(n) - f.trueVal))]);
+            
+            document.getElementById('figrow-ex1').style.display = 'grid';
+            document.getElementById('fig-lebesgue-riemann').innerHTML = buildLogLogChart(rPts, "Convergence for x² (Error vs Partitions)", "N or M (Partitions)", "Absolute Error", lPts, false, "Riemann", "Lebesgue");
+        }
+
+        // --- EXERCISE 2: Normal CDF ---
+        // High-precision references mapped from SciPy / mpmath (15 decimal digits)
+        const Z_TESTS = [0.5, 1.96, 3, 4, 6, 8, -4, -8];
+        const TRUE_CDF = {
+            "0.5": 0.691462461274013, "1.96": 0.975002104851780,
+            "3": 0.998650101968370, "4": 0.999968328758167,
+            "6": 0.999999999013412, "8": 1 - 6.220960574271786e-16,
+            "-4": 3.167124183311986e-05, "-8": 6.220960574271786e-16
+        };
+
+        const pdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+
+        // Simpson's 1/3 Rule: Integrates directly from -38 to z to preserve relative accuracy in tails
+        function simpsonNorm(z, N) {
+            if (N % 2 !== 0) N++; // Must be even
+            let a = -38; 
+            let h = (z - a) / N;
+            let sum = pdf(a) + pdf(z);
+            for(let i = 1; i < N; i++) sum += (i % 2 === 0 ? 2 : 4) * pdf(a + i * h);
+            return sum * h / 3;
+        }
+
+        // Alternating Taylor Series
+        function taylorAlt(z, K) {
+            let sum = 0, term = z, z2 = z * z;
+            for (let k = 0; k < K; k++) {
+                sum += term / (2 * k + 1);
+                term *= -z2 / (2 * (k + 1));
+            }
+            return 0.5 + sum / Math.sqrt(2 * Math.PI);
+        }
+
+        // Positive-Term Series & Asymptotic Tail Expansion
+        function taylorPosAsymptotic(z, K) {
+            if (z <= -4) {
+                // Asymptotic expansion for deep left tail avoids 0.5 - 0.5 floating point cancellation
+                let sum = 1, term = 1, z2 = z * z;
+                for(let k = 1; k < K; k++) {
+                    term *= -(2 * k - 1) / z2;
+                    sum += term;
+                }
+                return -pdf(z) / z * sum;
+            }
+            if (z < 0) {
+                // Standard positive series for mild negative numbers
+                let sum = 0, term = Math.abs(z), z2 = z * z;
+                for (let k = 0; k < K; k++) {
+                    sum += term;
+                    term *= z2 / (2 * k + 3);
+                }
+                return 0.5 - (pdf(z) * sum);
+            }
+            // Standard positive series for positive numbers
+            let sum = 0, term = z, z2 = z * z;
+            for (let k = 0; k < K; k++) {
+                sum += term;
+                term *= z2 / (2 * k + 3);
+            }
+            return 0.5 + (pdf(z) * sum);
+        }
+
+        function runEx2() {
+            let html = `<table><tr><th>z</th><th>SciPy Reference (15 digits)</th><th>Simpson (N=1k)</th><th>Simp Error</th><th>Alt Taylor (K=50)</th><th>Alt Error</th><th>Pos Taylor + Asymp. (K=50)</th><th>Pos/Asymp Error</th></tr>`;
+            
+            Z_TESTS.forEach(z => {
+                let trueVal = TRUE_CDF[z.toString()];
+                
+                let sVal = simpsonNorm(z, 1000);
+                let sErr = Math.abs(sVal - trueVal);
+                
+                let taVal = taylorAlt(z, 50);
+                let taErr = Math.abs(taVal - trueVal);
+
+                let tpVal = taylorPosAsymptotic(z, 50);
+                let tpErr = Math.abs(tpVal - trueVal);
+
+                html += `<tr><td><b>${z}</b></td><td>${g(trueVal, 15)}</td><td>${g(sVal, 10)}</td><td class="highlight">${sErr.toExponential(2)}</td><td>${g(taVal, 10)}</td><td style="color:${taErr > 1e-4 ? 'red' : 'inherit'}">${taErr.toExponential(2)}</td><td>${g(tpVal, 10)}</td><td>${tpErr.toExponential(2)}</td></tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('ex2-table-container').innerHTML = html;
+
+            // Generate Data for Log-Log Charts
+            const N_vals = [20, 40, 80, 160, 320, 640, 1280];
+            const K_vals = [10, 20, 30, 40, 50, 60];
+            const test_z = 1.96;
+            const true_z = TRUE_CDF["1.96"];
+
+            let sPts = N_vals.map(n => [n, Math.max(1e-16, Math.abs(simpsonNorm(test_z, n) - true_z))]);
+            // For Taylor Error, test at z=6 to highlight the Alternate Series divergence vs Positive Series convergence
+            let true_z6 = TRUE_CDF["6"];
+            let taPts = K_vals.map(k => [k, Math.max(1e-16, Math.abs(taylorAlt(6, k) - true_z6))]);
+            let tpPts = K_vals.map(k => [k, Math.max(1e-16, Math.abs(taylorPosAsymptotic(6, k) - true_z6))]);
+
+            document.getElementById('figrow-ex2').style.display = 'grid';
+            document.getElementById('fig-simpson').innerHTML = buildLogLogChart(sPts, "Simpson's Convergence vs N (z=1.96)", "N (Partitions)", "Absolute Error", null, true, "Simpson", "O(h⁴) Theory");
+            document.getElementById('fig-taylor').innerHTML = buildLogLogChart(taPts, "Taylor Series Convergence vs K (z=6)", "K (Terms)", "Absolute Error", tpPts, false, "Alt Taylor", "Pos Taylor");
+        }
+
+        // SVG Log-Log Plotter
+        function buildLogLogChart(data, title, xl, yl, data2 = null, plotO4 = false, label1="Series 1", label2="Series 2") {
+            let minX = Math.min(...data.map(d=>d[0])), maxX = Math.max(...data.map(d=>d[0]));
+            let minY = Math.min(...data.map(d=>d[1])), maxY = Math.max(...data.map(d=>d[1]));
+            if(data2) { minY = Math.min(minY, ...data2.map(d=>d[1])); maxY = Math.max(maxY, ...data2.map(d=>d[1])); }
+            
+            const lX = x => Math.log10(x);
+            const lY = y => Math.log10(y);
+            
+            const w=450, h=300, pad=50;
+            const mapX = x => pad + ((lX(x) - lX(minX)) / (lX(maxX) - lX(minX))) * (w - pad*2);
+            const mapY = y => h - pad - ((lY(y) - lY(minY)) / (lY(maxY) - lY(minY))) * (h - pad*2);
+
+            let svg = `<svg viewBox="0 0 ${w} ${h}">`;
+            svg += `<text x="${w/2}" y="20" text-anchor="middle" font-weight="bold" font-family="Georgia" font-size="13" fill="#3d4a3e">${title}</text>`;
+            svg += `<line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#3d4a3e" />`;
+            svg += `<line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="#3d4a3e" />`;
+            
+            // X-axis & Y-axis labels
+            svg += `<text x="${mapX(minX)}" y="${h-pad+15}" text-anchor="middle" font-size="10">${minX}</text>`;
+            svg += `<text x="${mapX(maxX)}" y="${h-pad+15}" text-anchor="middle" font-size="10">${maxX}</text>`;
+            svg += `<text x="${w/2}" y="${h-pad+35}" text-anchor="middle" font-size="12">${xl}</text>`;
+            svg += `<text x="${pad-5}" y="${mapY(minY)}" text-anchor="end" font-size="10">10^${Math.round(lY(minY))}</text>`;
+            svg += `<text x="${pad-5}" y="${mapY(maxY)}" text-anchor="end" font-size="10">10^${Math.round(lY(maxY))}</text>`;
+            
+            const drawPoly = (pts, color, dash=false) => {
+                let ptsStr = pts.map(p => `${mapX(p[0])},${mapY(p[1])}`).join(" ");
+                let out = `<polyline points="${ptsStr}" fill="none" stroke="${color}" stroke-width="2" ${dash ? 'stroke-dasharray="5 5"' : ''}/>`;
+                if(!dash) out += pts.map(p => `<circle cx="${mapX(p[0])}" cy="${mapY(p[1])}" r="3" fill="${color}"/>`).join("");
+                return out;
+            };
+
+            // Theoretical O(h^4) slope for Simpson comparison
+            if (plotO4) {
+                let startY = data[0][1];
+                let o4Pts = data.map(d => [d[0], startY * Math.pow(data[0][0] / d[0], 4)]);
+                svg += drawPoly(o4Pts, "#a3b899", true); // Dashed O(h^4) reference line
+            }
+
+            svg += drawPoly(data, "#728c75"); // Sage green (Data 1)
+            if(data2) svg += drawPoly(data2, "#e06651"); // Red (Data 2)
+            
+            // Legend
+            svg += `<rect x="${w-120}" y="30" width="110" height="40" fill="#FFFDF9" stroke="#d2ded0" rx="4"/>`;
+            svg += `<line x1="${w-115}" y1="40" x2="${w-100}" y2="40" stroke="#728c75" stroke-width="2"/><text x="${w-95}" y="44" font-size="10" fill="#3d4a3e">${label1}</text>`;
+            svg += `<line x1="${w-115}" y1="60" x2="${w-100}" y2="60" stroke="${plotO4 ? '#a3b899' : '#e06651'}" stroke-width="2" ${plotO4 ? 'stroke-dasharray="3 3"' : ''}/><text x="${w-95}" y="64" font-size="10" fill="#3d4a3e">${label2}</text>`;
+            
+            svg += `</svg>`;
+            return svg;
+        }
+
+    </script>
+</body>
+</html>
