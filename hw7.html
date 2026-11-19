@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homework 7 - Statistical Independence & Contingency Tables</title>
+<style>
+body{font-family:Georgia,"Palatino Linotype",serif;line-height:1.6;color:#3d4a3e;max-width:1150px;margin:0 auto;padding:40px 30px;background:#FAF6F0}
+.nav-btn{text-decoration:none;color:#4a5c4d;font-weight:bold;border:2px solid #a3b899;padding:8px 18px;border-radius:12px;background:#FFFDF9;display:inline-block;margin-bottom:20px}
+.nav-btn:hover{background:#728c75;color:#FFFDF9}
+h1{text-align:center;color:#4a5c4d;margin-bottom:5px;font-weight:normal}
+.subtitle{text-align:center;color:#728c75;font-style:italic;margin-bottom:36px}
+h2{color:#4a5c4d;border-bottom:2px solid #dcd4c4;padding-bottom:5px;margin-top:50px;font-weight:normal}
+h4{color:#5c705e;margin:22px 0 4px}
+h5{color:#5c705e;margin:22px 0 4px;font-size:1.02em}
+p,li{text-align:justify}
+.box{background:#FFFDF9;padding:24px;border:1px solid #e0dacf;border-radius:16px;margin-top:20px;box-shadow:0 6px 15px rgba(114,140,117,.04)}
+.report-section{background:#EDF3EC;padding:28px;border-radius:16px;border:1px solid #d2ded0;margin-top:25px}
+.report-section h3{color:#4a5c4d;margin-top:0;border-bottom:1px solid #c0ccbe;padding-bottom:8px}
+.report-section p{margin-top:5px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.9em;overflow-x:auto;display:block;white-space:nowrap}
+th,td{border:1px solid #d2ded0;padding:6px 11px;text-align:center}
+th:first-child,td:first-child{text-align:left}
+th{background:#dfe9dc;color:#4a5c4d}
+td.tot{background:#f4f1e8;font-weight:bold}
+.math-block{background:#FFFDF9;padding:12px 15px;border:1px dashed #c0ccbe;border-radius:12px;text-align:center;font-size:1.08em;margin:12px 0;color:#4a5c4d;font-style:italic;overflow-x:auto}
+.frac{display:inline-block;vertical-align:middle;text-align:center;margin:0 3px}
+.frac>span{display:block;padding:0 4px;line-height:1.35}
+.frac>span:first-child{border-bottom:1px solid #4a5c4d}
+.panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:14px}
+.panel{background:#F8F5EE;padding:16px;border-radius:12px;border:1px solid #e6dfd3}
+.panel h4{margin:0 0 10px;color:#728c75;border-bottom:1px dashed #c0ccbe;padding-bottom:5px;font-size:1.05em}
+.ig{margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.ig label{font-weight:bold;font-size:.9em;color:#5c705e}
+.ig select,.ig input,.ig textarea{padding:8px;border-radius:6px;border:1px solid #c0ccbe;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box}
+.hint{font-size:.8em;color:#7a7060}
+button.action-btn{width:100%;padding:14px;font-size:16px;background:#728c75;color:#FFFDF9;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin-top:6px}
+button.action-btn:hover{background:#4a5c4d}
+.highlight{color:#e06651;font-weight:bold}
+.stat{background:#F8F5EE;padding:14px 18px;border-radius:12px;border:1px solid #e6dfd3;margin-top:14px}
+.stat p{margin:6px 0}
+.warn{background:#fbeee9;border-left:4px solid #e06651;padding:8px 14px;border-radius:0 10px 10px 0;margin-top:10px;font-size:.92em}
+.note{background:#F4EFE6;border-left:4px solid #728c75;padding:10px 16px;border-radius:0 12px 12px 0;margin-top:12px;font-size:.93em}
+.figrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;margin-top:16px}
+.fig{background:#FFFDF9;border:1px solid #e0dacf;border-radius:14px;padding:10px}
+.fig svg{width:100%;height:auto;display:block}
+.cap{font-size:.86em;color:#5c705e;font-style:italic;margin:6px 2px 0;text-align:left}
+.small{font-size:.88em;color:#5c705e}
+.mono{font-family:"Courier New",monospace;font-size:.85em;color:#5c705e}
+</style>
+</head>
+<body>
+<a href="index.html" class="nav-btn">← Back to Home</a>
+<h1>Homework 7: Statistical Independence</h1>
+<div class="subtitle">Contingency tables, expected frequencies & Pearson's chi-square test</div>
+
+<div class="report-section">
+<h3>Theoretical framework: independence, association and causality</h3>
+
+<h4>1. Independence in probability, in descriptive statistics, and in inference</h4>
+<p><strong>In probability</strong>, independence is a property of a <em>model</em>: two random variables <em>X</em> and <em>Y</em> are independent if the joint distribution is the product of the marginals, <em>P(X = x, Y = y) = P(X = x) · P(Y = y)</em> for all (x, y); equivalently <em>P(Y = y | X = x) = P(Y = y)</em> whenever P(X = x) &gt; 0.</p>
+<p><strong>In descriptive statistics</strong>, the same idea is applied to a <em>dataset</em>: the variables are statistically independent in the data if the joint relative frequencies are the product of the marginal relative frequencies, <em>f<sub>ij</sub> = f<sub>i·</sub> f<sub>·j</sub></em> for every cell. This is equivalent to three other statements: the conditional distributions of Y are identical in every row, the conditional distributions of X are identical in every column, and the observed counts equal the expected counts, <em>O<sub>ij</sub> = E<sub>ij</sub></em>, i.e. χ² = 0. In a real sample this exact equality almost never holds: the table is "more or less" independent, and χ² measures how far it is.</p>
+<p><strong>In inferential statistics</strong>, the dataset is a random sample, and the question becomes whether the observed departure from independence can be explained by sampling variability alone. The null hypothesis <em>H<sub>0</sub></em> states that the two variables are independent in the population; under <em>H<sub>0</sub></em> the statistic χ² is still positive but, for large enough expected counts, approximately χ² distributed (Section 3).</p>
+
+<h4>2. Contingency tables, marginal and conditional frequencies, expected counts</h4>
+<p>Given the pairs (x<sub>k</sub>, f<sub>k</sub>) for k = 1, …, N, the contingency table counts <em>O<sub>ij</sub></em> = number of pairs with X = x<sub>i</sub> and F = f<sub>j</sub>. With row totals R<sub>i</sub> and column totals C<sub>j</sub>:</p>
+<ul>
+<li>joint relative frequency <em>f<sub>ij</sub> = O<sub>ij</sub>/N</em>; marginals <em>f<sub>i·</sub> = R<sub>i</sub>/N</em> and <em>f<sub>·j</sub> = C<sub>j</sub>/N</em>;</li>
+<li>conditional frequencies <em>f(F = f<sub>j</sub> | X = x<sub>i</sub>) = O<sub>ij</sub>/R<sub>i</sub></em> and <em>f(X = x<sub>i</sub> | F = f<sub>j</sub>) = O<sub>ij</sub>/C<sub>j</sub></em>.</li>
+</ul>
+<p>Under independence the expected count of the cell (i, j) is the count that the marginals would produce if each row had the same conditional distribution:</p>
+<div class="math-block">E<sub>ij</sub> = N f<sub>i·</sub> f<sub>·j</sub> = <span class="frac"><span>R<sub>i</sub> · C<sub>j</sub></span><span>N</span></span></div>
+
+<h4>3. Pearson's chi-square statistic, degrees of freedom and p-value</h4>
+<div class="math-block">χ² = ∑<sub>i</sub> ∑<sub>j</sub> <span class="frac"><span>(O<sub>ij</sub> − E<sub>ij</sub>)²</span><span>E<sub>ij</sub></span></span>, &nbsp;&nbsp; df = (r − 1)(c − 1)</div>
+<p>The degrees of freedom are (r − 1)(c − 1) because, once the margins are fixed, only that many cells can vary freely. Under H<sub>0</sub>, χ² is approximately χ²<sub>df</sub>-distributed, so the <strong>p-value</strong> is P(χ²<sub>df</sub> ≥ χ²<sub>obs</sub>) and H<sub>0</sub> is rejected at level α when p &lt; α, equivalently when χ²<sub>obs</sub> exceeds the critical value. Not rejecting H<sub>0</sub> means that the data are compatible with independence, not that independence has been proved. The approximation needs the expected counts not to be too small (a common rule: all E<sub>ij</sub> ≥ 5, or at most 20% of the cells below 5 and none below 1) and observations that are independent of one another. For 2 × 2 tables with small counts, Yates' continuity correction or Fisher's exact test are used; a permutation test, which does not rely on the χ² approximation, is also shown below.</p>
+
+<h4>4. Strength of the association</h4>
+<p>χ² grows with the sample size (multiplying all counts by 10 multiplies χ² by 10 and leaves the association unchanged), so a small p-value says that an association is detectable, not that it is large. The usual effect size is <strong>Cramér's V</strong> = √(χ² / (N · min(r − 1, c − 1))), which lies in [0, 1] (0 = independence). With w = V·√(min(r−1, c−1)), Cohen's conventional thresholds are 0.1 (small), 0.3 (medium), 0.5 (large). For 2 × 2 tables the <strong>odds ratio</strong> ad/(bc) is also reported; OR = 1 means independence. <strong>Adjusted standardized residuals</strong> (O − E)/√(E(1 − R<sub>i</sub>/N)(1 − C<sub>j</sub>/N)) show which cells are responsible: they are approximately standard normal under H<sub>0</sub>, so |residual| &gt; 2 marks a cell that deviates noticeably.</p>
+
+<h4>5. Association vs. causality</h4>
+<p>A small p-value indicates <strong>statistical association</strong>: knowing the category of X changes the distribution of F. It does not say that X causes F. The association may be produced by a <em>confounding</em> variable that affects both (e.g. the size of an organization affects both its security measures and its exposure to attacks), by <em>reverse causation</em> (organizations adopt measures after a breach), by <em>selection</em> (who attends tutoring is not random), by aggregating over groups (Simpson's paradox), or by chance. Establishing causality requires a design that controls these alternatives (randomization, controlling for confounders, temporal precedence) and a plausible mechanism, none of which a bivariate table provides.</p>
+</div>
+
+<h2>Interactive contingency table & chi-square engine</h2>
+<div class="box">
+<p style="margin-top:0">The engine starts from the <strong>raw pairs (X, F)</strong>, builds the contingency table by counting, and computes the frequencies and the test. The built-in datasets are expanded into one pair per observation, so the whole pipeline is the same as for your own data (choose "Your own data" and paste one pair per line, separated by a comma, semicolon or tab; up to 15 categories per variable).</p>
+<div class="panel-grid">
+<div class="panel"><h4>📂 Dataset</h4>
+<div class="ig"><label>Scenario</label><select id="ds" onchange="onDataset()">
+<option value="security">Firewall status vs. security breach (synthetic)</option>
+<option value="academic">Tutoring attendance vs. exam result (synthetic)</option>
+<option value="titanic">Titanic: passenger class vs. survival (real data)</option>
+<option value="indep">Two independent variables (simulated)</option>
+<option value="custom">Your own data (X,F pairs)</option></select></div>
+<div id="customBox" style="display:none">
+<div class="ig"><label>Pairs, one per line</label><textarea id="customText" rows="6" placeholder="Active,No breach&#10;Disabled,Breach&#10;…"></textarea></div>
+<div class="ig"><label><input type="checkbox" id="hdr" style="width:auto"> First line is a header</label></div>
+<input type="file" id="cfile" accept=".csv,.txt,.tsv"></div></div>
+<div class="panel"><h4>⚙️ Test settings</h4>
+<div class="ig"><label>Significance level α</label><select id="alpha"><option value="0.05" selected>0.05</option><option value="0.01">0.01</option><option value="0.10">0.10</option></select></div>
+<div class="ig"><label>Random seed (simulated data and permutations)</label><input type="number" id="seed" value="2026"></div></div>
+</div>
+<button class="action-btn" onclick="runAnalysis()">Build the table and run the test</button>
+<div id="results" style="margin-top:18px"></div>
+</div>
+
+<h2>Discussion</h2>
+<div class="report-section" id="disc">
+<h3>How to read the results</h3>
+<p><strong>Descriptive reading.</strong> The conditional frequencies are the key: if the variables were independent in the data, all the rows of the "F given X" table would be equal to the marginal row, and the stacked bars of Figure 1 would line up with the dashed guides. The more they differ, the larger χ². The residual map (Figure 2) says which cells make the difference, and V and the odds ratio say how large the difference is.</p>
+<p><strong>Inferential reading.</strong> χ² is compared with the χ²<sub>df</sub> distribution (Figure 3) or, without relying on that approximation, with the distribution obtained by shuffling the F labels while keeping the margins fixed (Figure 4: if X and F were unrelated, every shuffle of F would be an equally likely dataset). The two p-values agree when the expected counts are large; when they differ, the permutation or Fisher value is the safer one.</p>
+<h3>The datasets in this page</h3>
+<p><strong>Firewall and breach (synthetic).</strong> The counts are invented to illustrate a very strong association: with an active firewall 4.3% of the 470 systems were breached, with the firewall disabled 65.2% of 230. Even so, the table does not show that the firewall <em>prevents</em> breaches. Larger or better funded organizations may both keep the firewall active and have better monitoring; organizations breached in the past may disable or reconfigure systems during an incident (or enable the firewall only afterwards); a disabled firewall may be a symptom of a poorly managed network that has other weaknesses. A causal claim would need a controlled comparison, for instance randomizing the firewall setting among comparable machines.</p>
+<p><strong>Tutoring and exam (synthetic).</strong> 80% of the students who attended passed, against 40% of those who did not: a medium-sized association by Cohen's thresholds (V ≈ 0.41). It cannot be read as the effect of tutoring because students choose to attend: motivated or better prepared students may be more likely both to attend and to pass (selection and confounding), and the effect of tutoring itself is not separable from them.</p>
+<p><strong>Titanic (real data, Dawson 1995; the <code>Titanic</code> table of R's datasets package).</strong> The survival rate falls from first class (62%) to third class (25%) and crew (24%). The association is highly significant, but class is entangled with sex, age and the position of the cabins; part of the dependence is due to the "women and children first" policy and to the composition of each class, which is why a table of class against survival alone cannot isolate the effect of class.</p>
+<p><strong>Independent variables (simulated).</strong> Both variables are drawn independently, so the null hypothesis is true by construction. With α = 0.05 a test of a true null hypothesis rejects in about 5% of the datasets: try other seeds; failing to reject is the typical outcome, and the occasional rejection is exactly the type I error rate.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const g=(v,d=4)=>{if(!isFinite(v))return String(v);const a=Math.abs(v);if(a!==0&&(a>=1e6||a<1e-3))return v.toExponential(d-1);return String(+v.toPrecision(d));};
+const pct=v=>(100*v).toFixed(1)+'%';
+const fmtP=p=>p<1e-300?'< 1e-300':(p<1e-4?p.toExponential(2):p.toFixed(4));
+
+// ---------- special functions ----------
+function lgamma(x){const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0];const t=x+7.5;for(let i=1;i<9;i++)a+=c[i]/(x+i);return .5*Math.log(2*Math.PI)+(x+.5)*Math.log(t)-t+Math.log(a);}
+function gammaQ(a,x){   // regularized upper incomplete gamma Q(a,x)
+  if(x<=0)return 1;const lg=-x+a*Math.log(x)-lgamma(a);
+  if(x<a+1){let ap=a,sum=1/a,del=sum;for(let n=0;n<2000;n++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-16)break;}return Math.max(0,1-sum*Math.exp(lg));}
+  const tiny=1e-300;let b=x+1-a,c=1/tiny,d=1/b,h=d;
+  for(let i=1;i<2000;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<tiny)d=tiny;c=b+an/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-16)break;}
+  return Math.exp(lg)*h;
+}
+const chi2sf=(x,k)=>gammaQ(k/2,x/2);
+const chi2pdf=(x,k)=>x<=0?(k===2?.5:(k<2?Infinity:0)):Math.exp((k/2-1)*Math.log(x)-x/2-(k/2)*Math.log(2)-lgamma(k/2));
+function chi2crit(alpha,k){let lo=0,hi=10;while(chi2sf(hi,k)>alpha)hi*=2;for(let i=0;i<100;i++){const m=.5*(lo+hi);if(chi2sf(m,k)>alpha)lo=m;else hi=m;}return .5*(lo+hi);}
+const lchoose=(n,k)=>lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+function fisher2x2(a,b,c,d){const r1=a+b,r2=c+d,c1=a+c,N=r1+r2,lo=Math.max(0,c1-r2),hi=Math.min(r1,c1),lp=k=>lchoose(r1,k)+lchoose(r2,c1-k)-lchoose(N,c1),p0=lp(a);let p=0;for(let k=lo;k<=hi;k++){const l=lp(k);if(l<=p0+1e-9)p+=Math.exp(l);}return Math.min(1,p);}
+
+// ---------- datasets ----------
+const DATASETS={
+  security:{title:'Firewall status vs. security breach',rowName:'Firewall',colName:'Breach',rows:['Active','Disabled'],cols:['No breach','Breach detected'],counts:[[450,20],[80,150]],source:'synthetic data, invented for illustration'},
+  academic:{title:'Tutoring attendance vs. exam result',rowName:'Tutoring',colName:'Exam',rows:['Attended','Not attended'],cols:['Passed','Failed'],counts:[[120,30],[40,60]],source:'synthetic data, invented for illustration'},
+  titanic:{title:'Titanic: passenger class vs. survival',rowName:'Class',colName:'Outcome',rows:['1st','2nd','3rd','Crew'],cols:['Survived','Died'],counts:[[203,122],[118,167],[178,528],[212,673]],source:'real data: R datasets::Titanic (Dawson, 1995), summed over sex and age; 2201 people on board'},
+  indep:{title:'Two independent variables (simulated)',rowName:'X',colName:'F',rows:['A','B','C'],cols:['Yes','No'],source:'simulated: X ~ (0.5, 0.3, 0.2) and F ~ (0.4, 0.6), drawn independently, N = 400'}
+};
+function pairsFromCounts(ds){const p=[];ds.counts.forEach((r,i)=>r.forEach((c,j)=>{for(let k=0;k<c;k++)p.push([ds.rows[i],ds.cols[j]]);}));return p;}
+function simulateIndep(seed){const r=mulberry32(seed),p=[],pick=(pr,u)=>{let a=0;for(let i=0;i<pr.length;i++){a+=pr[i];if(u<a)return i;}return pr.length-1;};
+  const X=['A','B','C'],F=['Yes','No'];for(let k=0;k<400;k++)p.push([X[pick([.5,.3,.2],r())],F[pick([.4,.6],r())]]);return p;}
+function parseCustom(text,header){
+  const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);if(header)lines.shift();
+  const pairs=[],bad=[];lines.forEach((ln,i)=>{const q=ln.split(/[,;\t]/).map(s=>s.trim());if(q.length<2||!q[0]||!q[1])bad.push(i+1+(header?1:0));else pairs.push([q[0],q[1]]);});
+  return{pairs,bad};
+}
+function onDataset(){$('customBox').style.display=$('ds').value==='custom'?'block':'none';runAnalysis();}
+$('cfile').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>{$('customText').value=t;runAnalysis();});};
+
+// ---------- analysis ----------
+function sortCats(v){const a=[...new Set(v)];return a.every(x=>x!==''&&isFinite(x))?a.sort((p,q)=>p-q):a.sort((p,q)=>p.localeCompare(q,undefined,{numeric:true}));}
+function analyze(pairs,rowOrder,colOrder,alpha){
+  const rows=rowOrder||sortCats(pairs.map(p=>p[0])),cols=colOrder||sortCats(pairs.map(p=>p[1])),R=rows.length,C=cols.length;
+  if(R<2||C<2)return{error:'Both variables need at least two different categories.'};
+  if(R>15||C>15)return{error:'At most 15 categories per variable are supported.'};
+  const ri=new Map(rows.map((v,i)=>[v,i])),ci=new Map(cols.map((v,i)=>[v,i])),N=pairs.length;
+  const O=Array.from({length:R},()=>new Array(C).fill(0)),xi=new Int16Array(N),fi=new Int16Array(N);
+  pairs.forEach(([x,f],k)=>{const a=ri.get(x),b=ci.get(f);xi[k]=a;fi[k]=b;O[a][b]++;});
+  const Rt=O.map(r=>r.reduce((a,b)=>a+b,0)),Ct=cols.map((_,j)=>O.reduce((a,r)=>a+r[j],0));
+  const E=O.map((r,i)=>r.map((_,j)=>Rt[i]*Ct[j]/N));
+  let chi=0,minE=Infinity,below5=0;const contrib=[],resid=[];
+  for(let i=0;i<R;i++){contrib.push([]);resid.push([]);for(let j=0;j<C;j++){const e=E[i][j],o=O[i][j],cc=(o-e)**2/e;chi+=cc;contrib[i].push(cc);resid[i].push((o-e)/Math.sqrt(e*(1-Rt[i]/N)*(1-Ct[j]/N)));minE=Math.min(minE,e);if(e<5)below5++;}}
+  const df=(R-1)*(C-1),k=Math.min(R-1,C-1),V=Math.sqrt(chi/(N*k)),p=chi2sf(chi,df),crit=chi2crit(alpha,df);
+  const an={rows,cols,R,C,N,O,Rt,Ct,E,chi,df,p,crit,V,w:V*Math.sqrt(k),minE,below5,contrib,resid,xi,fi,alpha};
+  an.condRow=O.map((r,i)=>r.map(o=>o/Rt[i]));an.condCol=O.map((r,i)=>r.map((o,j)=>o/Ct[j]));an.margCol=Ct.map(c=>c/N);an.margRow=Rt.map(r=>r/N);
+  if(R===2&&C===2){const [a,b]=O[0],[c,d]=O[1];an.yates=0;for(let i=0;i<2;i++)for(let j=0;j<2;j++)an.yates+=Math.max(0,Math.abs(O[i][j]-E[i][j])-.5)**2/E[i][j];
+    an.pYates=chi2sf(an.yates,1);an.pFisher=fisher2x2(a,b,c,d);const z=(a===0||b===0||c===0||d===0)?.5:0;
+    an.OR=((a+z)*(d+z))/((b+z)*(c+z));const se=Math.sqrt(1/(a+z)+1/(b+z)+1/(c+z)+1/(d+z));an.orLo=Math.exp(Math.log(an.OR)-1.96*se);an.orHi=Math.exp(Math.log(an.OR)+1.96*se);an.orHald=z>0;}
+  return an;
+}
+function permTest(an,seed){
+  const N=an.N;if(N>60000)return null;const B=N>5000?500:2000,rand=mulberry32(seed+7),f=Int16Array.from(an.fi),xi=an.xi,C=an.C,E=an.E.flat(),res=new Float64Array(B),cnt=new Int32Array(an.R*C);let ge=0;
+  for(let b=0;b<B;b++){for(let i=N-1;i>0;i--){const j=Math.floor(rand()*(i+1)),t=f[i];f[i]=f[j];f[j]=t;}
+    cnt.fill(0);for(let i=0;i<N;i++)cnt[xi[i]*C+f[i]]++;let c2=0;for(let q=0;q<cnt.length;q++){const d=cnt[q]-E[q];c2+=d*d/E[q];}res[b]=c2;if(c2>=an.chi-1e-9)ge++;}
+  return{res,B,p:(ge+1)/(B+1)};
+}
+
+// ---------- charts ----------
+const COL={ink:'#3d4a3e',grid:'#e6dfd3',sage:'#728c75',light:'#a3b899',ocra:'#e8b86b',red:'#e06651',violet:'#8f729e',blue:'#5b86a8',muted:'#7a7060'};
+const PAL=[COL.sage,COL.ocra,COL.violet,COL.blue,COL.red,COL.light,'#b8956b','#6aa6a0','#c27ba0','#9aa25b','#7f8fa9','#d99a6c','#8aa88a','#b3a2c7','#c9b458'];
+const TX=(x,y,s,o={})=>`<text x="${(+x).toFixed(1)}" y="${(+y).toFixed(1)}" font-family="Georgia,serif" font-size="${o.size||12}" fill="${o.fill||COL.muted}" text-anchor="${o.anchor||'middle'}"${o.bold?' font-weight="bold"':''}${o.rot?` transform="rotate(${o.rot} ${x} ${y})"`:''}>${esc(s)}</text>`;
+const cut=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+function niceTicks(lo,hi,n){const span=hi-lo,raw=span/n,e=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/e,st=(f<=1?1:f<=2?2:f<=5?5:10)*e,out=[];for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9*st;v+=st)out.push(+v.toPrecision(12));return out;}
+let uid=0;
+function lineChart(o,fn){
+  const w=o.w||520,h=o.h||330,l=o.l||58,r=14,t=o.legend?46:32,b=o.xl?50:34,pw=w-l-r,ph=h-t-b,id='cp'+(++uid);
+  const X=x=>l+(x-o.xmin)/(o.xmax-o.xmin)*pw,Y=y=>t+ph-(y-o.ymin)/(o.ymax-o.ymin)*ph,yt=niceTicks(o.ymin,o.ymax,5),xt=niceTicks(o.xmin,o.xmax,6);
+  let s=TX(w/2,16,o.title,{size:13.5,fill:COL.ink,bold:true});
+  if(o.legend){let cx=l;o.legend.forEach(it=>{s+=(it.line?`<line x1="${cx}" x2="${cx+14}" y1="32.5" y2="32.5" stroke="${it.color}" stroke-width="2"${it.dash?' stroke-dasharray="4 3"':''}/>`:`<rect x="${cx}" y="24" width="10" height="10" fill="${it.color}" opacity=".7"/>`)+TX(cx+17,36,it.name,{anchor:'start'});cx+=17+it.name.length*5.6+14;});}
+  yt.forEach(v=>{const y=Y(v);s+=`<line x1="${l}" x2="${w-r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${COL.grid}"/>`+TX(l-6,y+3.5,g(v,3),{anchor:'end'});});
+  xt.forEach(v=>{const x=X(v);s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${t}" y2="${t+ph}" stroke="${COL.grid}"/>`+TX(x,t+ph+15,g(v,3));});
+  s+=`<rect x="${l}" y="${t}" width="${pw}" height="${ph}" fill="none" stroke="${COL.muted}"/><clipPath id="${id}"><rect x="${l}" y="${t}" width="${pw}" height="${ph}"/></clipPath><g clip-path="url(#${id})">${fn(X,Y)}</g>`;
+  if(o.xl)s+=TX(l+pw/2,h-7,o.xl);if(o.yl)s+=TX(13,t+ph/2,o.yl,{rot:-90});
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(o.title)}">${s}</svg>`;
+}
+function stackedBars(an,ds){
+  const w=520,left=118,top=58,bh=26,gap=12,labels=[...an.rows,'All (marginal)'],bars=[...an.condRow,an.margCol],h=top+bars.length*(bh+gap)+34,pw=w-left-16;
+  let s=TX(w/2,16,`Distribution of ${ds.colName} within each ${ds.rowName}`,{size:13.5,fill:COL.ink,bold:true});
+  let cx=left;an.cols.forEach((c,j)=>{s+=`<rect x="${cx}" y="26" width="10" height="10" fill="${PAL[j%PAL.length]}"/>`+TX(cx+14,35,cut(c,18),{anchor:'start'});cx+=14+Math.min(18,c.length)*5.6+14;});
+  bars.forEach((b,i)=>{const y=top+i*(bh+gap);let x=left;s+=TX(left-8,y+bh/2+4,cut(labels[i],16),{anchor:'end',fill:COL.ink});
+    b.forEach((v,j)=>{const wd=v*pw;s+=`<rect x="${x.toFixed(1)}" y="${y}" width="${wd.toFixed(1)}" height="${bh}" fill="${PAL[j%PAL.length]}" opacity="${i===bars.length-1?1:.85}" stroke="#FFFDF9" stroke-width="1"/>`;if(wd>34)s+=TX(x+wd/2,y+bh/2+4,pct(v),{fill:'#fff',size:11});x+=wd;});});
+  let acc=0;an.margCol.slice(0,-1).forEach(v=>{acc+=v;const x=left+acc*pw;s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${top-4}" y2="${top+bars.length*(bh+gap)-gap+4}" stroke="${COL.ink}" stroke-dasharray="4 3" stroke-width="1.2"/>`;});
+  [0,.25,.5,.75,1].forEach(v=>{const x=left+v*pw;s+=TX(x,h-14,Math.round(v*100)+'%');});
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stacked bars">${s}</svg>`;
+}
+function heatmap(an,ds){
+  const w=520,left=118,top=70,ch=36,cw=Math.min(100,(w-left-14)/an.C),h=top+an.R*ch+30;
+  let s=TX(w/2,16,'Adjusted standardized residuals (O − E)',{size:13.5,fill:COL.ink,bold:true});
+  an.cols.forEach((c,j)=>{s+=TX(left+(j+.5)*cw,top-10,cut(c,Math.floor(cw/6.5)),{fill:COL.ink,size:11.5});});
+  an.rows.forEach((r,i)=>{s+=TX(left-8,top+i*ch+ch/2+4,cut(r,16),{anchor:'end',fill:COL.ink});
+    an.cols.forEach((c,j)=>{const v=an.resid[i][j],t=Math.min(1,Math.abs(v)/4),base=v>=0?[224,102,81]:[91,134,168],mix=base.map(q=>Math.round(255+(q-255)*t));
+      s+=`<rect x="${left+j*cw}" y="${top+i*ch}" width="${cw-2}" height="${ch-2}" rx="4" fill="rgb(${mix})"/>`+TX(left+(j+.5)*cw-1,top+i*ch+ch/2+4,(v>=0?'+':'')+v.toFixed(1),{fill:t>.55?'#fff':COL.ink,bold:Math.abs(v)>2,size:12});});});
+  s+=TX(w/2,h-6,'red: more observations than expected, blue: fewer; |value| > 2 (bold) is a notable deviation',{size:10.5});
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Residual heat map">${s}</svg>`;
+}
+function densityChart(an){
+  const k=an.df,xmax=an.chi<=an.crit*8?Math.max(an.crit*2.5,an.chi*1.15):an.crit*2.5,off=an.chi>xmax,pts=[];
+  const xs=Array.from({length:300},(_,i)=>xmax*(i+1)/300);let ymax=0;xs.forEach(x=>{if(x>=xmax/40)ymax=Math.max(ymax,chi2pdf(x,k));});ymax*=1.15;
+  return lineChart({title:`χ² distribution, df = ${k}`,xmin:0,xmax,ymin:0,ymax,xl:'χ²',yl:'density',legend:[{name:'density under H₀',color:COL.sage,line:true},{name:`rejection region (α = ${an.alpha})`,color:COL.red},{name:'observed',color:COL.ink,line:true,dash:true}]},
+    (X,Y)=>{const reg=xs.filter(x=>x>=an.crit);let s=reg.length?`<polygon points="${X(an.crit).toFixed(1)},${Y(0).toFixed(1)} ${reg.map(x=>X(x).toFixed(1)+','+Y(Math.min(ymax,chi2pdf(x,k))).toFixed(1)).join(' ')} ${X(xmax).toFixed(1)},${Y(0).toFixed(1)}" fill="${COL.red}" opacity=".35"/>`:'';
+      s+=`<polyline fill="none" stroke="${COL.sage}" stroke-width="2.2" points="${xs.map(x=>X(x).toFixed(1)+','+Y(Math.min(ymax,chi2pdf(x,k))).toFixed(1)).join(' ')}"/>`;
+      s+=`<line x1="${X(an.crit).toFixed(1)}" x2="${X(an.crit).toFixed(1)}" y1="${Y(0).toFixed(1)}" y2="${Y(ymax).toFixed(1)}" stroke="${COL.red}" stroke-dasharray="3 3"/>`+TX(X(an.crit)+4,Y(ymax)+14,'critical '+g(an.crit,3),{anchor:'start',fill:COL.red,size:11});
+      if(!off)s+=`<line x1="${X(an.chi).toFixed(1)}" x2="${X(an.chi).toFixed(1)}" y1="${Y(0).toFixed(1)}" y2="${Y(ymax).toFixed(1)}" stroke="${COL.ink}" stroke-width="1.8" stroke-dasharray="6 3"/>`+TX(X(an.chi)-4,Y(ymax)+28,'observed '+g(an.chi,4),{anchor:'end',fill:COL.ink,size:11});
+      else s+=TX(X(xmax)-6,Y(ymax*.5),'observed χ² = '+g(an.chi,4)+'  (off the scale) →',{anchor:'end',fill:COL.ink,size:11.5});
+      return s;});
+}
+function permChart(an,pt){
+  const res=pt.res,mx=Math.max(...res),xmax=Math.max(mx*1.08,an.crit*1.3,an.df*3),off=an.chi>xmax,nb=30,bw=xmax/nb,cnt=new Array(nb).fill(0);
+  res.forEach(v=>{const b=Math.min(nb-1,Math.floor(v/bw));cnt[b]++;});const dens=cnt.map(c=>c/(pt.B*bw));
+  const xs=Array.from({length:200},(_,i)=>xmax*(i+1)/200);let ymax=Math.max(...dens);xs.forEach(x=>{if(x>=xmax/30)ymax=Math.max(ymax,chi2pdf(x,an.df));});ymax*=1.12;
+  return lineChart({title:`Permutation test (${pt.B} shuffles of F)`,xmin:0,xmax,ymin:0,ymax,xl:'χ² of the shuffled datasets',yl:'density',legend:[{name:'shuffled datasets',color:COL.light},{name:`χ² density, df = ${an.df}`,color:COL.red,line:true},{name:'observed',color:COL.ink,line:true,dash:true}]},
+    (X,Y)=>{let s=dens.map((d,i)=>`<rect x="${X(i*bw).toFixed(1)}" y="${Y(d).toFixed(1)}" width="${Math.max(0,X((i+1)*bw)-X(i*bw)-.6).toFixed(1)}" height="${Math.max(0,Y(0)-Y(d)).toFixed(1)}" fill="${COL.light}" fill-opacity=".8" stroke="${COL.sage}" stroke-width=".6"/>`).join('');
+      s+=`<polyline fill="none" stroke="${COL.red}" stroke-width="2.2" points="${xs.map(x=>X(x).toFixed(1)+','+Y(Math.min(ymax,chi2pdf(x,an.df))).toFixed(1)).join(' ')}"/>`;
+      if(!off)s+=`<line x1="${X(an.chi).toFixed(1)}" x2="${X(an.chi).toFixed(1)}" y1="${Y(0).toFixed(1)}" y2="${Y(ymax).toFixed(1)}" stroke="${COL.ink}" stroke-width="1.8" stroke-dasharray="6 3"/>`;
+      else s+=TX(X(xmax)-6,Y(ymax*.55),'observed χ² = '+g(an.chi,4)+'  (off the scale) →',{anchor:'end',fill:COL.ink,size:11.5});
+      return s;});
+}
+
+// ---------- rendering ----------
+function tableHTML(head,rows,opt={}){return '<table><tr>'+head.map(h=>`<th>${h}</th>`).join('')+'</tr>'+rows.map(r=>'<tr>'+r.map((c,j)=>`<td${opt.totalFrom!==undefined&&(j>=opt.totalFrom)?' class="tot"':''}>${c}</td>`).join('')+'</tr>').join('')+'</table>';}
+function runAnalysis(){
+  const key=$('ds').value,alpha=+$('alpha').value,seed=parseInt($('seed').value)||2026;let ds,pairs,rowO=null,colO=null,note='';
+  if(key==='custom'){
+    const {pairs:p,bad}=parseCustom($('customText').value,$('hdr').checked);
+    if(!p.length){$('results').innerHTML='<p class="warn">Paste at least a few lines "X,F" (one pair per line) or load a .csv file.</p>';return;}
+    ds={title:'Your own data',rowName:'X',colName:'F',source:'data entered by the user'};pairs=p;
+    if(bad.length)note=`<p class="warn">${bad.length} line(s) ignored because they do not contain two values (e.g. line ${bad[0]}).</p>`;
+  }else{ds=DATASETS[key];pairs=key==='indep'?simulateIndep(seed):pairsFromCounts(ds);if(key!=='indep'){rowO=ds.rows;colO=ds.cols;}}
+  const an=analyze(pairs,rowO,colO,alpha);
+  if(an.error){$('results').innerHTML=`<p class="warn">${an.error}</p>`;return;}
+  if(key==='indep'){ds.rows=an.rows;ds.cols=an.cols;}
+  const rn=ds.rowName,cn=ds.colName;let h=`<h4 style="margin-top:0">${esc(ds.title)}</h4><p class="small">Source: ${esc(ds.source)}. Sample size N = <b>${an.N}</b>, ${an.R} × ${an.C} categories.</p>${note}`;
+  h+=`<p class="mono">First pairs (X, F): ${pairs.slice(0,6).map(p=>`(${esc(p[0])}, ${esc(p[1])})`).join(' ')} …</p>`;
+  const head=(first)=>[`${esc(rn)} \\ ${esc(cn)}`,...an.cols.map(esc),first];
+  h+=`<h5>1. Observed frequencies O<sub>ij</sub> (contingency table)</h5>`+tableHTML(head('Row total'),[...an.O.map((r,i)=>[`<b>${esc(an.rows[i])}</b>`,...r,an.Rt[i]]),['Column total',...an.Ct,an.N]],{totalFrom:an.C+1});
+  h=h.replace(/<td>Column total<\/td>/,'<td class="tot">Column total</td>');
+  h+=`<h5>2. Joint and marginal relative frequencies (f<sub>ij</sub>, f<sub>i·</sub>, f<sub>·j</sub>)</h5>`+tableHTML(head('f<sub>i·</sub>'),[...an.O.map((r,i)=>[`<b>${esc(an.rows[i])}</b>`,...r.map(o=>pct(o/an.N)),pct(an.margRow[i])]),['f<sub>·j</sub>',...an.margCol.map(pct),'100.0%']],{totalFrom:an.C+1});
+  h+=`<h5>3. Conditional frequencies</h5><p class="small" style="margin:2px 0">F given X (each row sums to 100%): if the variables were independent, every row would equal the last one.</p>`+
+    tableHTML(head('Row total'),[...an.condRow.map((r,i)=>[`<b>${esc(an.rows[i])}</b>`,...r.map(pct),'100.0%']),['<i>overall (marginal of F)</i>',...an.margCol.map(pct),'100.0%']]);
+  h+=`<p class="small" style="margin:10px 0 2px">X given F (each column sums to 100%):</p>`+
+    tableHTML(head('overall (marginal of X)'),[...an.condCol.map((r,i)=>[`<b>${esc(an.rows[i])}</b>`,...r.map(pct),pct(an.margRow[i])]),['<i>total</i>',...an.cols.map(()=>'100.0%'),'100.0%']]);
+  h+=`<h5>4. Expected frequencies under independence, E<sub>ij</sub> = R<sub>i</sub>·C<sub>j</sub>/N, and contributions (O − E)²/E</h5>`+
+    tableHTML(head('Row total'),[...an.E.map((r,i)=>[`<b>${esc(an.rows[i])}</b>`,...r.map((e,j)=>`${e.toFixed(2)} <span class="small">(${an.contrib[i][j].toFixed(2)})</span>`),an.Rt[i].toString()])]);
+  const reject=an.p<alpha,str=an.w<.1?'negligible':an.w<.3?'small':an.w<.5?'medium':'large';
+  h+=`<div class="stat"><h5 style="margin-top:0">5. Chi-square test of independence</h5>
+  <p>χ² = <span class="highlight">${an.chi.toFixed(4)}</span>, df = ${an.df}, <b>p-value = ${fmtP(an.p)}</b>, critical value at α = ${alpha}: ${an.crit.toFixed(4)}</p>`;
+  const pt=permTest(an,seed);
+  if(pt)h+=`<p>Permutation test (${pt.B} shuffles, margins fixed): <b>p = ${fmtP(pt.p)}</b> (the smallest value that ${pt.B} shuffles can show is ${(1/(pt.B+1)).toExponential(1)}).</p>`;
+  if(an.R===2&&an.C===2)h+=`<p>2 × 2 extras: Yates-corrected χ² = ${an.yates.toFixed(4)} (p = ${fmtP(an.pYates)}); Fisher's exact test p = ${fmtP(an.pFisher)}; odds ratio = ${g(an.OR,4)}${an.orHald?' (0.5 added to each cell because of a zero)':''}, 95% CI [${g(an.orLo,3)}, ${g(an.orHi,3)}].</p>`;
+  h+=`<p>Effect size: Cramér's V = <b>${an.V.toFixed(3)}</b> (${str} association by Cohen's thresholds).</p>`;
+  if(an.minE<5)h+=`<p class="warn">${an.below5} of ${an.R*an.C} cells have an expected count below 5 (smallest ${an.minE.toFixed(2)}): the χ² approximation may be unreliable; prefer ${an.R===2&&an.C===2?"Fisher's exact test":'the permutation p-value'}.</p>`;
+  else h+=`<p class="small">All expected counts are at least 5 (smallest ${an.minE.toFixed(2)}), so the χ² approximation is reasonable.</p>`;
+  // descriptive sentence on the most unequal column
+  let bj=0,bs=-1;for(let j=0;j<an.C;j++){const v=an.condRow.map(r=>r[j]),s=Math.max(...v)-Math.min(...v);if(s>bs){bs=s;bj=j;}}
+  h+=`<p><b>Descriptive reading.</b> The share of “${esc(an.cols[bj])}” among the categories of ${esc(rn)} is: ${an.rows.map((r,i)=>`${esc(r)} ${pct(an.condRow[i][bj])}`).join(', ')}; overall ${pct(an.margCol[bj])}.</p>`;
+  h+=`<p><b>Conclusion.</b> ${reject?`Since p = ${fmtP(an.p)} &lt; α = ${alpha}, we <b>reject the null hypothesis of independence</b>: the data show a statistically significant association between ${esc(rn)} and ${esc(cn)}, of ${str} size (V = ${an.V.toFixed(2)}).`:`Since p = ${fmtP(an.p)} ≥ α = ${alpha}, we <b>do not reject independence</b>: the departure from the expected counts is compatible with sampling variability. This does not prove that the variables are independent, only that the data do not show an association (with N = ${an.N} only large associations would be detected reliably).`} <i>Association is not causality</i>: see the discussion of confounding, reverse causation and selection below.</p></div>`;
+  h+=`<div class="figrow"><div class="fig">${stackedBars(an,ds)}</div><div class="fig">${heatmap(an,ds)}</div><div class="fig">${densityChart(an)}</div>${pt?`<div class="fig">${permChart(an,pt)}</div>`:''}</div>
+  <p class="cap">Figure 1: conditional distribution of ${esc(cn)} in each row; the dashed lines are the marginal proportions, which every row would follow under independence. Figure 2: where the table departs from independence. Figure 3: observed χ² against the χ² distribution with df = ${an.df} and the rejection region. ${pt?'Figure 4: the same statistic computed on datasets in which the F labels are shuffled at random (independence by construction).':''}</p>`;
+  $('results').innerHTML=h;
+}
+runAnalysis();
+</script>
+</body>
+</html>
